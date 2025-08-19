@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitlab-config
+  namespace: devops
+  labels:
+    app: gitlab
+data:
+  gitlab.rb: |
+    external_url 'http://gitlab.local'
+    
+    # PostgreSQL configuration
+    postgresql['enable'] = false
+    gitlab_rails['db_adapter'] = 'postgresql'
+    gitlab_rails['db_encoding'] = 'unicode'
+    gitlab_rails['db_database'] = 'gitlab'
+    gitlab_rails['db_username'] = 'gitlab_user'
+    gitlab_rails['db_host'] = 'postgres.devops.svc.cluster.local'
+    gitlab_rails['db_port'] = 5432
+    
+    # Redis configuration
+    redis['enable'] = false
+    gitlab_rails['redis_host'] = 'redis.devops.svc.cluster.local'
+    gitlab_rails['redis_port'] = 6379
+    
+    # GitLab Shell configuration
+    gitlab_shell['ssh_port'] = 22
+    
+    # Nginx configuration
+    nginx['listen_port'] = 80
+    nginx['listen_https'] = false
+    
+    # Registry configuration
+    registry_external_url 'http://registry.gitlab.local'
+    gitlab_rails['registry_enabled'] = true
+    registry['enable'] = true
+    registry['registry_http_addr'] = "0.0.0.0:5000"
+    
+    # GitLab Runner registration token (change this!)
+    gitlab_rails['initial_shared_runners_registration_token'] = 'registration-token-123'
+    
+    # Disable unused services to save resources
+    alertmanager['enable'] = false
+    prometheus['enable'] = false
+    grafana['enable'] = false
+    node_exporter['enable'] = false
+    redis_exporter['enable'] = false
+    postgres_exporter['enable'] = false
+    gitlab_exporter['enable'] = false
+    
+    # Performance settings for 12 cores, 32GB RAM
+    unicorn['worker_processes'] = 8
+    unicorn['worker_memory_limit_min'] = "1024 * 1 << 20"
+    unicorn['worker_memory_limit_max'] = "1536 * 1 << 20"
+    
+    sidekiq['max_concurrency'] = 50
+    sidekiq['min_concurrency'] = 10
+    
+    # Puma configuration (GitLab 13.0+)
+    puma['enable'] = true
+    puma['worker_processes'] = 8
+    puma['min_threads'] = 4
+    puma['max_threads'] = 16
+    puma['worker_timeout'] = 60
+    puma['per_worker_max_memory_mb'] = 1024
+    
+    # Gitaly performance
+    gitaly['configuration'] = {
+      concurrency: [
+        {
+          'rpc' => "/gitaly.SmartHTTPService/PostReceivePack",
+          'max_per_repo' => 20
+        },
+        {
+          'rpc' => "/gitaly.SSHService/SSHUploadPack",
+          'max_per_repo' => 20
+        }
+      ]
+    }
+    
+    # PostgreSQL connection pooling
+    gitlab_rails['db_pool'] = 20
+    gitlab_rails['db_connect_timeout'] = 60
+    
+    # Redis performance
+    gitlab_rails['redis_timeout'] = 60
+    gitlab_rails['redis_tcp_keepalive'] = 60
+    
+    # Background job performance
+    gitlab_rails['background_jobs_max_concurrency'] = 50

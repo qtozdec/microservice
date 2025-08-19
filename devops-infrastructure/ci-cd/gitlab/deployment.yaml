@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab
+  namespace: devops
+  labels:
+    app: gitlab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitlab
+  template:
+    metadata:
+      labels:
+        app: gitlab
+    spec:
+      securityContext:
+        fsGroup: 998
+      containers:
+      - name: gitlab
+        image: gitlab/gitlab-ce:16.4.1-ce.0
+        ports:
+        - containerPort: 80
+          name: http
+        - containerPort: 22
+          name: ssh
+        - containerPort: 5000
+          name: registry
+        env:
+        - name: GITLAB_OMNIBUS_CONFIG
+          value: "from_file('/omnibus_config/gitlab.rb')"
+        - name: GITLAB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-secret
+              key: gitlab-root-password
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-secret
+              key: gitlab-postgres-password
+        - name: GITLAB_SHARED_RUNNERS_REGISTRATION_TOKEN
+          value: "registration-token-123"
+        volumeMounts:
+        - name: gitlab-config-volume
+          mountPath: /etc/gitlab
+        - name: gitlab-data-volume
+          mountPath: /var/opt/gitlab
+        - name: gitlab-logs-volume
+          mountPath: /var/log/gitlab
+        - name: gitlab-config-file
+          mountPath: /omnibus_config
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2000m"
+          limits:
+            memory: "16Gi"
+            cpu: "6000m"
+        livenessProbe:
+          httpGet:
+            path: /-/health
+            port: 80
+          initialDelaySeconds: 300
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /-/readiness
+            port: 80
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: gitlab-config-volume
+        persistentVolumeClaim:
+          claimName: gitlab-config-pvc
+      - name: gitlab-data-volume
+        persistentVolumeClaim:
+          claimName: gitlab-data-pvc
+      - name: gitlab-logs-volume
+        persistentVolumeClaim:
+          claimName: gitlab-logs-pvc
+      - name: gitlab-config-file
+        configMap:
+          name: gitlab-config

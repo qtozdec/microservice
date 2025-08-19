@@ -1,0 +1,84 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+  labels:
+    type: local
+spec:
+  storageClassName: fast-ssd
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/postgres"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexus-pv
+  labels:
+    type: local
+spec:
+  storageClassName: fast-ssd
+  capacity:
+    storage: 200Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexus"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-config-pv
+  labels:
+    type: local
+spec:
+  storageClassName: fast-ssd
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/gitlab/config"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-data-pv
+  labels:
+    type: local
+spec:
+  storageClassName: fast-ssd
+  capacity:
+    storage: 200Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/gitlab/data"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-logs-pv
+  labels:
+    type: local
+spec:
+  storageClassName: fast-ssd
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/gitlab/logs"

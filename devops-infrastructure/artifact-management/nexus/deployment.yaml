@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus
+  namespace: devops
+  labels:
+    app: nexus
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexus
+  template:
+    metadata:
+      labels:
+        app: nexus
+    spec:
+      securityContext:
+        fsGroup: 200
+      containers:
+      - name: nexus
+        image: sonatype/nexus3:3.42.0
+        ports:
+        - containerPort: 8081
+          name: nexus-ui
+        - containerPort: 8082
+          name: docker-group
+        - containerPort: 8083
+          name: docker-hosted
+        env:
+        - name: NEXUS_SECURITY_RANDOMPASSWORD
+          value: "false"
+        - name: INSTALL4J_ADD_VM_PARAMS
+          value: "-Xms4g -Xmx8g -XX:MaxDirectMemorySize=8g -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+UseG1GC -XX:G1HeapRegionSize=32m -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200"
+        volumeMounts:
+        - name: nexus-data
+          mountPath: /nexus-data
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1000m"
+          limits:
+            memory: "12Gi"
+            cpu: "4000m"
+        livenessProbe:
+          httpGet:
+            path: /service/rest/v1/status
+            port: 8081
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /service/rest/v1/status
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: nexus-data
+        persistentVolumeClaim:
+          claimName: nexus-pvc

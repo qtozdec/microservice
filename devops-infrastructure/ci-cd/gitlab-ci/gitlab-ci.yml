@@ -1,0 +1,268 @@
+stages:
+  - test
+  - build
+  - security-scan
+  - deploy-staging
+  - integration-tests
+  - deploy-production
+
+variables:
+  DOCKER_DRIVER: overlay2
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+  DOCKER_REGISTRY: $CI_REGISTRY
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  STAGING_NAMESPACE: "microservices-staging"
+  PRODUCTION_NAMESPACE: "microservices"
+
+cache:
+  paths:
+    - .m2/repository/
+    - node_modules/
+
+# ===================
+# Test Stage
+# ===================
+
+unit-tests:
+  stage: test
+  image: maven:3.9-openjdk-21
+  script:
+    - cd applications/user-service && mvn $MAVEN_CLI_OPTS test
+    - cd ../order-service && mvn $MAVEN_CLI_OPTS test
+    - cd ../notification-service && mvn $MAVEN_CLI_OPTS test
+    - cd ../inventory-service && mvn $MAVEN_CLI_OPTS test
+  artifacts:
+    reports:
+      junit:
+        - applications/*/target/surefire-reports/TEST-*.xml
+    paths:
+      - applications/*/target/jacoco-reports/
+  coverage: '/Total.*?([0-9]{1,3})%/'
+
+frontend-tests:
+  stage: test
+  image: node:18-alpine
+  script:
+    - cd applications/frontend
+    - npm ci
+    - npm run test:coverage
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: applications/frontend/coverage/cobertura-coverage.xml
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+
+lint-check:
+  stage: test
+  image: maven:3.9-openjdk-21
+  script:
+    - cd applications/user-service && mvn checkstyle:check
+    - cd ../order-service && mvn checkstyle:check
+    - cd ../notification-service && mvn checkstyle:check
+    - cd ../inventory-service && mvn checkstyle:check
+  allow_failure: true
+
+# ===================
+# Build Stage
+# ===================
+
+build-services:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  parallel:
+    matrix:
+      - SERVICE: user-service
+      - SERVICE: order-service
+      - SERVICE: notification-service
+      - SERVICE: inventory-service
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - cd applications/$SERVICE
+    - docker build -t $CI_REGISTRY_IMAGE/$SERVICE:$IMAGE_TAG .
+    - docker build -t $CI_REGISTRY_IMAGE/$SERVICE:latest .
+    - docker push $CI_REGISTRY_IMAGE/$SERVICE:$IMAGE_TAG
+    - docker push $CI_REGISTRY_IMAGE/$SERVICE:latest
+  dependencies:
+    - unit-tests
+
+build-frontend:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - cd applications/frontend
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:$IMAGE_TAG .
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:latest .
+    - docker push $CI_REGISTRY_IMAGE/frontend:$IMAGE_TAG
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  dependencies:
+    - frontend-tests
+
+# ===================
+# Security Scanning
+# ===================
+
+security-scan:
+  stage: security-scan
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  parallel:
+    matrix:
+      - SERVICE: user-service
+      - SERVICE: order-service
+      - SERVICE: notification-service
+      - SERVICE: inventory-service
+      - SERVICE: frontend
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock 
+        -v $PWD:/tmp/.cache/ aquasec/trivy:latest image 
+        --exit-code 0 --no-progress --format table 
+        $CI_REGISTRY_IMAGE/$SERVICE:$IMAGE_TAG
+  dependencies:
+    - build-services
+    - build-frontend
+
+dependency-check:
+  stage: security-scan
+  image: maven:3.9-openjdk-21
+  script:
+    - cd applications/user-service
+    - mvn org.owasp:dependency-check-maven:check
+  artifacts:
+    reports:
+      dependency_scanning: applications/*/target/dependency-check-report.json
+  allow_failure: true
+
+# ===================
+# Staging Deployment
+# ===================
+
+deploy-staging:
+  stage: deploy-staging
+  image: bitnami/kubectl:latest
+  environment:
+    name: staging
+    url: https://microservices-staging.local
+  script:
+    - kubectl config use-context $KUBE_CONTEXT
+    - |
+      for service in user-service order-service notification-service inventory-service frontend; do
+        helm upgrade --install $service-staging ./helm/$service \
+          --namespace $STAGING_NAMESPACE \
+          --create-namespace \
+          --set image.tag=$IMAGE_TAG \
+          --set image.repository=$CI_REGISTRY_IMAGE/$service \
+          --set environment=staging \
+          --wait --timeout=300s
+      done
+  dependencies:
+    - security-scan
+  only:
+    - main
+    - develop
+
+# ===================
+# Integration Tests
+# ===================
+
+integration-tests:
+  stage: integration-tests
+  image: node:18-alpine
+  script:
+    - cd tests/integration
+    - npm ci
+    - npm run test:staging
+  environment:
+    name: staging
+  dependencies:
+    - deploy-staging
+  only:
+    - main
+    - develop
+
+performance-tests:
+  stage: integration-tests
+  image: loadimpact/k6:latest
+  script:
+    - k6 run --out influxdb=http://influxdb:8086/k6 tests/performance/load-test.js
+  environment:
+    name: staging
+  dependencies:
+    - deploy-staging
+  allow_failure: true
+  only:
+    - main
+
+# ===================
+# Production Deployment
+# ===================
+
+deploy-production:
+  stage: deploy-production
+  image: bitnami/kubectl:latest
+  environment:
+    name: production
+    url: https://microservices.local
+  script:
+    - kubectl config use-context $KUBE_CONTEXT
+    - |
+      for service in user-service order-service notification-service inventory-service frontend; do
+        helm upgrade --install $service ./helm/$service \
+          --namespace $PRODUCTION_NAMESPACE \
+          --create-namespace \
+          --set image.tag=$IMAGE_TAG \
+          --set image.repository=$CI_REGISTRY_IMAGE/$service \
+          --set environment=production \
+          --set replicaCount=3 \
+          --wait --timeout=600s
+      done
+  dependencies:
+    - integration-tests
+  when: manual
+  only:
+    - main
+
+# ===================
+# Rollback Job
+# ===================
+
+rollback-production:
+  stage: deploy-production
+  image: bitnami/kubectl:latest
+  environment:
+    name: production
+  script:
+    - kubectl config use-context $KUBE_CONTEXT
+    - |
+      for service in user-service order-service notification-service inventory-service frontend; do
+        helm rollback $service -n $PRODUCTION_NAMESPACE
+      done
+  when: manual
+  only:
+    - main
+
+# ===================
+# Cleanup Jobs
+# ===================
+
+cleanup-registry:
+  stage: deploy-production
+  image: docker:24.0.5
+  script:
+    - |
+      # Keep only last 10 images per service
+      for service in user-service order-service notification-service inventory-service frontend; do
+        echo "Cleaning up old images for $service"
+        # Add cleanup logic here
+      done
+  when: manual
+  only:
+    - main

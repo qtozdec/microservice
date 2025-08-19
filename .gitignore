@@ -1,0 +1,281 @@
+# ===========================================
+# Microservices Platform .gitignore
+# ===========================================
+
+# Environment Files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Secrets and Keys
+*.key
+*.pem
+*.p12
+*.jks
+secrets/
+**/*secret*
+**/*password*
+**/*token*
+application-secrets.yml
+application-*.yml
+!application.yml.example
+
+# IDE Files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Java/Maven
+target/
+*.jar
+*.war
+*.ear
+*.class
+.classpath
+.project
+.settings/
+.metadata/
+.factorypath
+dependency-reduced-pom.xml
+
+# Gradle
+.gradle/
+build/
+out/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Node.js/NPM
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# React Build
+/build
+/dist
+.cache/
+
+# Logs
+logs/
+*.log
+**/*.log
+application.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/
+pgdata/
+mysql-data/
+
+# Docker
+.dockerignore.bak
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+kustomization.yml.bak
+
+# Certificates and Security
+*.crt
+*.csr
+certificates/
+ssl/
+tls/
+
+# Monitoring Data
+prometheus-data/
+grafana-data/
+elasticsearch-data/
+kibana-data/
+logstash-data/
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+.cache
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup Files
+*.bak
+*.backup
+*.old
+*~
+
+# Testing
+coverage/
+test-results/
+.nyc_output
+junit.xml
+coverage.xml
+
+# CI/CD
+.gitlab-ci-local/
+pipeline-cache/
+
+# Local Development
+local/
+dev/
+debug/
+
+# Generated Files
+generated/
+auto-generated/
+
+# Package Files
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.metadata
+.settings/
+.project
+.classpath
+bin/
+gen/
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===========================================
+# Service-Specific Ignores
+# ===========================================
+
+# Spring Boot
+HELP.md
+mvnw
+mvnw.cmd
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# React/Frontend specific
+# dependencies
+applications/frontend/node_modules
+applications/frontend/.pnp
+applications/frontend/.pnp.js
+applications/frontend/coverage
+applications/frontend/build
+applications/frontend/.env.local
+applications/frontend/.env.development.local
+applications/frontend/.env.test.local
+applications/frontend/.env.production.local
+
+# Next.js (if used)
+.next/
+out/
+
+# Nuxt.js (if used)
+.nuxt/
+dist/
+
+# ===========================================
+# Infrastructure Specific
+# ===========================================
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+.terraformrc
+terraform.rc
+
+# Ansible
+*.retry
+group_vars/vault.yml
+host_vars/*/vault.yml
+
+# Helm
+charts/*.tgz
+.helmignore
+
+# ArgoCD
+argocd-server.crt
+argocd-server.key
+dex.server.crt
+dex.server.key
+
+# Monitoring
+prometheus.yml.local
+grafana.ini.local
+datasources.local.yml
+
+# ===========================================
+# Specific File Patterns to Always Ignore
+# ===========================================
+
+# Never commit these patterns
+*password*
+*secret*
+*key*
+*token*
+*private*
+*credential*
+*auth*
+*.pem
+*.key
+*.p12
+*.jks
+config.local.*
+application-local.*
+bootstrap-local.*
+
+# But allow example files
+!*.example
+!*.template
+!*.sample
+
+.claude

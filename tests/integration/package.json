@@ -1,0 +1,24 @@
+{
+  "name": "microservices-integration-tests",
+  "version": "1.0.0",
+  "description": "Integration tests for microservices platform",
+  "scripts": {
+    "test": "jest",
+    "test:staging": "jest --config=jest.staging.config.js",
+    "test:production": "jest --config=jest.production.config.js",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "ws": "^8.14.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.9.0",
+    "typescript": "^5.2.2",
+    "ts-jest": "^29.1.1"
+  }
+}
