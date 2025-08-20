@@ -36,29 +36,64 @@ metadata:
 data:
   init.sql: |
     -- Create databases for microservices
-    CREATE DATABASE user_service;
-    CREATE DATABASE order_service;
-    CREATE DATABASE notification_service;
+    CREATE DATABASE user_service_db;
+    CREATE DATABASE order_service_db;
+    CREATE DATABASE notification_service_db;
+    CREATE DATABASE inventory_service_db;
+    CREATE DATABASE audit_service_db;
     CREATE DATABASE gitlab;
     
     -- Create users for each service
-    CREATE USER user_service_user WITH ENCRYPTED PASSWORD 'user_service_pass';
-    CREATE USER order_service_user WITH ENCRYPTED PASSWORD 'order_service_pass';
-    CREATE USER notification_service_user WITH ENCRYPTED PASSWORD 'notification_service_pass';
+    CREATE USER microservices_user WITH ENCRYPTED PASSWORD 'changeme';
     CREATE USER gitlab_user WITH ENCRYPTED PASSWORD 'gitlab_pass';
     
-    -- Grant privileges
-    GRANT ALL PRIVILEGES ON DATABASE user_service TO user_service_user;
-    GRANT ALL PRIVILEGES ON DATABASE order_service TO order_service_user;
-    GRANT ALL PRIVILEGES ON DATABASE notification_service TO notification_service_user;
+    -- Grant privileges on databases
+    GRANT ALL PRIVILEGES ON DATABASE user_service_db TO microservices_user;
+    GRANT ALL PRIVILEGES ON DATABASE order_service_db TO microservices_user;
+    GRANT ALL PRIVILEGES ON DATABASE notification_service_db TO microservices_user;
+    GRANT ALL PRIVILEGES ON DATABASE inventory_service_db TO microservices_user;
+    GRANT ALL PRIVILEGES ON DATABASE audit_service_db TO microservices_user;
     GRANT ALL PRIVILEGES ON DATABASE gitlab TO gitlab_user;
     
-    -- Create schemas
-    \c user_service;
-    CREATE SCHEMA IF NOT EXISTS user_service AUTHORIZATION user_service_user;
+    -- Connect to each database and grant schema privileges
+    \c user_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
     
-    \c order_service;
-    CREATE SCHEMA IF NOT EXISTS order_service AUTHORIZATION order_service_user;
+    \c order_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
     
-    \c notification_service;
-    CREATE SCHEMA IF NOT EXISTS notification_service AUTHORIZATION notification_service_user;
+    \c notification_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
+    
+    \c inventory_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
+    
+    \c audit_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
+    
+    \c gitlab;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO gitlab_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gitlab_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO gitlab_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO gitlab_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO gitlab_user;

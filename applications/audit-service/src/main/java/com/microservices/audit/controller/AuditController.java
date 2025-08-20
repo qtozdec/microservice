@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/audit")
@@ -39,7 +38,7 @@ public class AuditController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AuditEvent> getAuditEventById(@PathVariable UUID id) {
+    public ResponseEntity<AuditEvent> getAuditEventById(@PathVariable Long id) {
         Optional<AuditEvent> auditEvent = auditService.getAuditEventById(id);
         return auditEvent.map(ResponseEntity::ok)
                         .orElse(ResponseEntity.notFound().build());

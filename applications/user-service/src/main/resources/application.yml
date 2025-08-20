@@ -13,10 +13,14 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
     show-sql: ${SPRING_JPA_SHOW_SQL:false}
     database-platform: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
     open-in-view: false
+  
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: ${SPRING_LIQUIBASE_ENABLED:true}
   
   redis:
     host: ${SPRING_REDIS_HOST:localhost}

@@ -11,7 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 @Transactional
@@ -30,12 +33,16 @@ public class InventoryService {
         return productRepository.findAll();
     }
 
-    public Optional<Product> getProductById(UUID id) {
-        return productRepository.findById(id);
+    public Product getProductById(Long id) {
+        return productRepository.findById(id).orElse(null);
+    }
+    
+    public Page<Product> getAllProducts(Pageable pageable) {
+        return productRepository.findAll(pageable);
     }
 
-    public Optional<Product> getProductBySku(String sku) {
-        return productRepository.findBySku(sku);
+    public Product getProductBySku(String sku) {
+        return productRepository.findBySku(sku).orElse(null);
     }
 
     public List<Product> getProductsByCategory(String category) {
@@ -47,7 +54,6 @@ public class InventoryService {
     }
 
     public Product createProduct(Product product) {
-        product.setId(UUID.randomUUID());
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
         
@@ -63,7 +69,7 @@ public class InventoryService {
         return savedProduct;
     }
 
-    public Product updateProduct(UUID id, Product productUpdate) {
+    public Product updateProduct(Long id, Product productUpdate) {
         return productRepository.findById(id)
             .map(product -> {
                 if (productUpdate.getName() != null) {
@@ -97,18 +103,21 @@ public class InventoryService {
             .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
     }
 
-    public void deleteProduct(UUID id) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        
-        productRepository.deleteById(id);
-        
-        // Send event to Kafka
-        sendInventoryEvent("PRODUCT_DELETED", product);
-        
-        // Send real-time update via WebSocket
-        messagingTemplate.convertAndSend("/topic/inventory", 
-            new InventoryUpdateEvent("PRODUCT_DELETED", product));
+    public boolean deleteProduct(Long id) {
+        Optional<Product> productOpt = productRepository.findById(id);
+        if (productOpt.isPresent()) {
+            Product product = productOpt.get();
+            productRepository.deleteById(id);
+            
+            // Send event to Kafka
+            sendInventoryEvent("PRODUCT_DELETED", product);
+            
+            // Send real-time update via WebSocket
+            messagingTemplate.convertAndSend("/topic/inventory", 
+                new InventoryUpdateEvent("PRODUCT_DELETED", product));
+            return true;
+        }
+        return false;
     }
 
     public Product reserveStock(String sku, Integer quantity) {
@@ -204,5 +213,64 @@ public class InventoryService {
         public void setProduct(Product product) { this.product = product; }
         public LocalDateTime getTimestamp() { return timestamp; }
         public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    }
+    
+    // Additional methods needed by controller
+    public boolean reserveProduct(Long id, Integer quantity) {
+        Optional<Product> productOpt = productRepository.findById(id);
+        if (productOpt.isPresent()) {
+            Product product = productOpt.get();
+            if (product.isAvailable(quantity)) {
+                product.setReservedQuantity(product.getReservedQuantity() + quantity);
+                productRepository.save(product);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public boolean releaseReservation(Long id, Integer quantity) {
+        Optional<Product> productOpt = productRepository.findById(id);
+        if (productOpt.isPresent()) {
+            Product product = productOpt.get();
+            if (product.getReservedQuantity() >= quantity) {
+                product.setReservedQuantity(product.getReservedQuantity() - quantity);
+                productRepository.save(product);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public boolean checkAvailability(Long id, Integer quantity) {
+        Optional<Product> productOpt = productRepository.findById(id);
+        return productOpt.map(product -> product.isAvailable(quantity)).orElse(false);
+    }
+    
+    public Map<String, Object> getInventoryStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+        long totalProducts = productRepository.count();
+        List<Product> allProducts = productRepository.findAll();
+        
+        long lowStockCount = allProducts.stream()
+            .mapToInt(p -> p.getAvailableQuantity())
+            .filter(q -> q < 10)
+            .count();
+            
+        long totalQuantity = allProducts.stream()
+            .mapToInt(Product::getQuantity)
+            .sum();
+            
+        long totalReserved = allProducts.stream()
+            .mapToInt(Product::getReservedQuantity)
+            .sum();
+        
+        stats.put("totalProducts", totalProducts);
+        stats.put("lowStockCount", lowStockCount);
+        stats.put("totalQuantity", totalQuantity);
+        stats.put("totalReserved", totalReserved);
+        stats.put("totalAvailable", totalQuantity - totalReserved);
+        
+        return stats;
     }
 }

@@ -28,6 +28,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(req -> req
+                .requestMatchers("/health", "/actuator/health").permitAll()
                 .requestMatchers("/api/orders/**").hasAnyRole("USER", "ADMIN")
                 .anyRequest().authenticated()
             )

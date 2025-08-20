@@ -1,0 +1,88 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-db-init
+  namespace: devops
+  labels:
+    app: postgres-init
+    component: database
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: postgres-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: postgres-init
+        image: postgres:15-alpine
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h postgres.devops.svc.cluster.local -p 5432 -U postgres; do
+            echo "PostgreSQL not ready, waiting 5 seconds..."
+            sleep 5
+          done
+          echo "PostgreSQL is ready, executing initialization script..."
+          psql -h postgres.devops.svc.cluster.local -p 5432 -U postgres -d postgres < /init-scripts/init.sql
+          echo "Database initialization completed successfully!"
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: init-script
+          mountPath: /init-scripts
+          readOnly: true
+      volumes:
+      - name: init-script
+        configMap:
+          name: postgres-initdb
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-db-init-v2
+  namespace: default
+  labels:
+    app: postgres-init-v2
+    component: database
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: postgres-init-v2
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: postgres-init
+        image: postgres:15-alpine
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h postgres.default.svc.cluster.local -p 5432 -U postgres; do
+            echo "PostgreSQL not ready, waiting 5 seconds..."
+            sleep 5
+          done
+          echo "PostgreSQL is ready, executing initialization script..."
+          psql -h postgres.default.svc.cluster.local -p 5432 -U postgres -d postgres < /init-scripts/init-databases.sql
+          echo "Database initialization completed successfully!"
+        env:
+        - name: PGPASSWORD
+          value: "postgres_pass"
+        volumeMounts:
+        - name: init-script
+          mountPath: /init-scripts
+          readOnly: true
+      volumes:
+      - name: init-script
+        configMap:
+          name: postgres-init-script

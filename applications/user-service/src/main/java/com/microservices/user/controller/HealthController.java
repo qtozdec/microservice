@@ -23,7 +23,7 @@ public class HealthController {
     @Autowired
     private DataSource dataSource;
 
-    @Autowired
+    @Autowired(required = false)
     private RedisTemplate<String, Object> redisTemplate;
 
     @GetMapping
@@ -32,13 +32,15 @@ public class HealthController {
         health.put("status", "UP");
         health.put("service", "user-service");
         health.put("timestamp", System.currentTimeMillis());
-        health.put("checks", performHealthChecks());
+        Map<String, Object> checks = performHealthChecks();
+        health.put("checks", checks);
         
-        boolean allHealthy = health.get("checks") instanceof Map && 
-            ((Map<?, ?>) health.get("checks")).values().stream()
-                .allMatch(check -> check instanceof Map && "UP".equals(((Map<?, ?>) check).get("status")));
+        // Only require database to be UP for service to be considered healthy
+        // Redis issues should not make the service unavailable
+        Map<String, Object> dbCheck = (Map<String, Object>) checks.get("database");
+        boolean dbHealthy = dbCheck != null && "UP".equals(dbCheck.get("status"));
         
-        if (!allHealthy) {
+        if (!dbHealthy) {
             health.put("status", "DOWN");
             return ResponseEntity.status(503).body(health);
         }
@@ -98,6 +100,12 @@ public class HealthController {
 
     private Map<String, Object> checkRedis() {
         Map<String, Object> redisHealth = new HashMap<>();
+        if (redisTemplate == null) {
+            redisHealth.put("status", "DOWN");
+            redisHealth.put("error", "Redis not configured");
+            return redisHealth;
+        }
+        
         try {
             redisTemplate.opsForValue().set("health:check", "ok");
             String result = (String) redisTemplate.opsForValue().get("health:check");

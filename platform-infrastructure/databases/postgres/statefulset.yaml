@@ -40,11 +40,11 @@ spec:
           mountPath: /docker-entrypoint-initdb.d
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "1000m"
+            memory: "512Mi"
+            cpu: "200m"
           limits:
-            memory: "8Gi"
-            cpu: "4000m"
+            memory: "1Gi"
+            cpu: "500m"
         livenessProbe:
           exec:
             command:
@@ -76,7 +76,7 @@ spec:
         app: postgres
     spec:
       accessModes: ["ReadWriteOnce"]
-      storageClassName: fast-ssd
+      storageClassName: hostpath
       resources:
         requests:
-          storage: 100Gi
+          storage: 5Gi

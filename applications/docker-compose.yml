@@ -39,15 +39,16 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: ${USER_DB_NAME:-user_service_db}
+      POSTGRES_DB: postgres
       POSTGRES_USER: ${DB_USERNAME:-microservices_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
     ports:
       - "15432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-microservices_user}"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -99,10 +100,13 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/microservices_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${ORDER_DB_NAME:-order_service_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-microservices_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-changeme}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=${JWT_SECRET:-default-secret-key-change-in-production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
     restart: unless-stopped
 
   notification-service:
@@ -120,10 +124,13 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/microservices_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${NOTIFICATION_DB_NAME:-notification_service_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-microservices_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-changeme}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=${JWT_SECRET:-default-secret-key-change-in-production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
     restart: unless-stopped
 
   inventory-service:
@@ -141,10 +148,13 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/microservices_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${INVENTORY_DB_NAME:-inventory_service_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-microservices_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-changeme}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=${JWT_SECRET:-default-secret-key-change-in-production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
     restart: unless-stopped
 
   audit-service:
@@ -162,10 +172,13 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/microservices_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${AUDIT_DB_NAME:-audit_service_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-microservices_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-changeme}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=${JWT_SECRET:-default-secret-key-change-in-production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
     restart: unless-stopped
 
   frontend:

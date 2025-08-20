@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: default
+data:
+  init-databases.sql: |
+    -- Create databases for microservices
+    CREATE DATABASE user_service_db;
+    CREATE DATABASE order_service_db;
+    CREATE DATABASE notification_service_db;
+    CREATE DATABASE inventory_service_db;
+    CREATE DATABASE audit_service_db;
+    
+    -- Create users for each service
+    CREATE USER microservices_user WITH ENCRYPTED PASSWORD 'changeme';
+    
+    -- Grant privileges on databases
+    GRANT ALL PRIVILEGES ON DATABASE user_service_db TO microservices_user;
+    GRANT ALL PRIVILEGES ON DATABASE order_service_db TO microservices_user;
+    GRANT ALL PRIVILEGES ON DATABASE notification_service_db TO microservices_user;
+    GRANT ALL PRIVILEGES ON DATABASE inventory_service_db TO microservices_user;
+    GRANT ALL PRIVILEGES ON DATABASE audit_service_db TO microservices_user;
+    
+    -- Connect to each database and grant schema privileges
+    \c user_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
+    
+    \c order_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
+    
+    \c notification_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
+    
+    \c inventory_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
+    
+    \c audit_service_db;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO microservices_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO microservices_user;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO microservices_user;
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: default
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: postgres-init
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - microservices_user
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - microservices_user
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+      - name: postgres-init
+        configMap:
+          name: postgres-init-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: default
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP

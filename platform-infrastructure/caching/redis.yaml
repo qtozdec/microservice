@@ -28,10 +28,7 @@ spec:
         - $(REDIS_PASSWORD)
         env:
         - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: gitlab-secret
-              key: gitlab-redis-password
+          value: "RedisSecure2024!"
         resources:
           requests:
             memory: "512Mi"

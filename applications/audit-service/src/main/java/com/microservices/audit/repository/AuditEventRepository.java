@@ -10,16 +10,15 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Repository
-public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID> {
+public interface AuditEventRepository extends JpaRepository<AuditEvent, Long> {
     
-    List<AuditEvent> findByServiceOrderByTimestampDesc(String service);
+    List<AuditEvent> findByServiceNameOrderByTimestampDesc(String serviceName);
     
     List<AuditEvent> findByUserIdOrderByTimestampDesc(String userId);
     
-    List<AuditEvent> findByEntityTypeOrderByTimestampDesc(String entityType);
+    List<AuditEvent> findByResourceTypeOrderByTimestampDesc(String resourceType);
     
     List<AuditEvent> findByActionOrderByTimestampDesc(String action);
     
@@ -27,11 +26,11 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID> {
     
     List<AuditEvent> findByActionContainingIgnoreCaseOrderByTimestampDesc(String action);
     
-    Page<AuditEvent> findByServiceOrderByTimestampDesc(String service, Pageable pageable);
+    Page<AuditEvent> findByServiceNameOrderByTimestampDesc(String serviceName, Pageable pageable);
     
     Page<AuditEvent> findByUserIdOrderByTimestampDesc(String userId, Pageable pageable);
     
-    Long countByService(String service);
+    Long countByServiceName(String serviceName);
     
     Long countByUserId(String userId);
     
@@ -40,7 +39,7 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID> {
     @Query("SELECT COUNT(a) FROM AuditEvent a WHERE a.timestamp >= :startDate AND a.timestamp <= :endDate")
     Long countByTimestampBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
-    @Query("SELECT a.service, COUNT(a) FROM AuditEvent a GROUP BY a.service ORDER BY COUNT(a) DESC")
+    @Query("SELECT a.serviceName, COUNT(a) FROM AuditEvent a GROUP BY a.serviceName ORDER BY COUNT(a) DESC")
     List<Object[]> getEventCountByService();
     
     @Query("SELECT a.action, COUNT(a) FROM AuditEvent a GROUP BY a.action ORDER BY COUNT(a) DESC")

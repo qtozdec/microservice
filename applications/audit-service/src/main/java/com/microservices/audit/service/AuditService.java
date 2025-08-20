@@ -10,9 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -24,13 +25,19 @@ public class AuditService {
     public AuditEvent createAuditEvent(String service, String action, String entityType, 
                                      String entityId, String userId, Object metadata) {
         AuditEvent auditEvent = new AuditEvent();
-        auditEvent.setId(UUID.randomUUID());
-        auditEvent.setService(service);
+        auditEvent.setServiceName(service);
         auditEvent.setAction(action);
-        auditEvent.setEntityType(entityType);
-        auditEvent.setEntityId(entityId);
+        auditEvent.setResourceType(entityType);
+        auditEvent.setResourceId(entityId);
         auditEvent.setUserId(userId);
-        auditEvent.setMetadata(metadata != null ? metadata.toString() : null);
+        
+        // Convert metadata to Map<String, String>
+        if (metadata != null) {
+            Map<String, String> metadataMap = new HashMap<>();
+            metadataMap.put("data", metadata.toString());
+            auditEvent.setMetadata(metadataMap);
+        }
+        
         auditEvent.setTimestamp(LocalDateTime.now());
         auditEvent.setIpAddress(getCurrentIpAddress());
         auditEvent.setUserAgent(getCurrentUserAgent());
@@ -42,12 +49,12 @@ public class AuditService {
         return auditEventRepository.findAll(pageable);
     }
 
-    public Optional<AuditEvent> getAuditEventById(UUID id) {
+    public Optional<AuditEvent> getAuditEventById(Long id) {
         return auditEventRepository.findById(id);
     }
 
     public List<AuditEvent> getAuditEventsByService(String service) {
-        return auditEventRepository.findByServiceOrderByTimestampDesc(service);
+        return auditEventRepository.findByServiceNameOrderByTimestampDesc(service);
     }
 
     public List<AuditEvent> getAuditEventsByUser(String userId) {
@@ -55,7 +62,7 @@ public class AuditService {
     }
 
     public List<AuditEvent> getAuditEventsByEntityType(String entityType) {
-        return auditEventRepository.findByEntityTypeOrderByTimestampDesc(entityType);
+        return auditEventRepository.findByResourceTypeOrderByTimestampDesc(entityType);
     }
 
     public List<AuditEvent> getAuditEventsByAction(String action) {
@@ -75,7 +82,7 @@ public class AuditService {
     }
 
     public Long getAuditEventCountByService(String service) {
-        return auditEventRepository.countByService(service);
+        return auditEventRepository.countByServiceName(service);
     }
 
     // Kafka event listeners
@@ -137,7 +144,15 @@ public class AuditService {
     public void logComplianceEvent(String regulation, String action, String entityType, 
                                   String entityId, String userId, String details) {
         AuditEvent auditEvent = createAuditEvent("compliance", action, entityType, entityId, userId, details);
-        auditEvent.setMetadata(auditEvent.getMetadata() + " | Regulation: " + regulation);
+        
+        // Add regulation to metadata
+        Map<String, String> metadata = auditEvent.getMetadata();
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+        metadata.put("regulation", regulation);
+        auditEvent.setMetadata(metadata);
+        
         auditEventRepository.save(auditEvent);
     }
 
