@@ -4,21 +4,21 @@ echo "🚀 Deploying Prometheus + Grafana Monitoring Stack..."
 
 # Create monitoring namespace
 echo "Creating monitoring namespace..."
-kubectl apply -f namespace.yaml
+kubectl apply -f ../devops-infrastructure/monitoring/namespace.yaml
 
 # Deploy Prometheus RBAC
 echo "Deploying Prometheus RBAC..."
-kubectl apply -f prometheus/rbac.yaml
+kubectl apply -f ../devops-infrastructure/monitoring/prometheus/rbac.yaml
 
 # Deploy Prometheus ConfigMap and Deployment
 echo "Deploying Prometheus..."
-kubectl apply -f prometheus/configmap.yaml
-kubectl apply -f prometheus/deployment.yaml
+kubectl apply -f ../devops-infrastructure/monitoring/prometheus/configmap.yaml
+kubectl apply -f ../devops-infrastructure/monitoring/prometheus/deployment.yaml
 
 # Deploy Grafana ConfigMaps and Deployment
 echo "Deploying Grafana..."
-kubectl apply -f grafana/configmap.yaml
-kubectl apply -f grafana/deployment.yaml
+kubectl apply -f ../devops-infrastructure/monitoring/grafana/configmap.yaml
+kubectl apply -f ../devops-infrastructure/monitoring/grafana/deployment.yaml
 
 # Wait for deployments to be ready
 echo "Waiting for Prometheus to be ready..."

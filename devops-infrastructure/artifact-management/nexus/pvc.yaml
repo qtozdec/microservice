@@ -8,7 +8,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: fast-ssd
+  storageClassName: hostpath
   resources:
     requests:
       storage: 200Gi

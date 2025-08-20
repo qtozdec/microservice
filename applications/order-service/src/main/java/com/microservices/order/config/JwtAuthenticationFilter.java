@@ -30,6 +30,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         
+        // Skip JWT processing for actuator and health endpoints
+        String requestPath = request.getRequestURI();
+        if (requestPath.startsWith("/actuator") || requestPath.startsWith("/health")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;

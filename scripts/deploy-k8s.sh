@@ -58,24 +58,23 @@ print_status "Waiting for Kafka to be ready..."
 kubectl wait --for=condition=ready pod -l app=kafka -n devops --timeout=300s
 print_success "Kafka and Zookeeper deployed"
 
-print_status "Deploying Microservices Configuration..."
-kubectl apply -f k8s/microservices/configmap.yaml
-kubectl apply -f k8s/microservices/secrets.yaml
-print_success "Microservices configuration deployed"
+print_status "Deploying Secrets..."
+./deploy-secrets.sh
+print_success "Secrets deployed"
 
 print_status "Deploying Microservices..."
-kubectl apply -f k8s/microservices/user-service.yaml
-kubectl apply -f k8s/microservices/order-service.yaml
-kubectl apply -f k8s/microservices/notification-service.yaml
-kubectl apply -f k8s/microservices/inventory-service.yaml
-kubectl apply -f k8s/microservices/audit-service.yaml
+kubectl apply -f ../k8s/microservices/user-service.yaml
+kubectl apply -f ../k8s/microservices/order-service.yaml
+kubectl apply -f ../k8s/microservices/notification-service.yaml
+print_success "Core microservices deployed"
+
+print_status "Note: inventory-service and audit-service deployments need to be created"
+print_status "The platform can run with user, order, and notification services"
 
 print_status "Waiting for microservices to be ready..."
 kubectl wait --for=condition=available deployment/user-service -n microservices --timeout=300s
 kubectl wait --for=condition=available deployment/order-service -n microservices --timeout=300s
 kubectl wait --for=condition=available deployment/notification-service -n microservices --timeout=300s
-kubectl wait --for=condition=available deployment/inventory-service -n microservices --timeout=300s
-kubectl wait --for=condition=available deployment/audit-service -n microservices --timeout=300s
 
 print_success "All microservices deployed successfully!"
 

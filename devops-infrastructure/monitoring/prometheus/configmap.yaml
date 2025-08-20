@@ -75,30 +75,52 @@ data:
         action: replace
         target_label: kubernetes_pod_name
 
-    # Application services
+    # Microservices applications
     - job_name: 'microservices'
       static_configs:
       - targets:
-        - 'user-service.microservices:8081'
-        - 'order-service.microservices:8082'
-        - 'notification-service.microservices:8083'
-        - 'inventory-service.microservices:8084'
-        - 'audit-service.microservices:8085'
+        - 'user-service.microservices.svc.cluster.local:8081'
+        - 'order-service.microservices.svc.cluster.local:8082'
+        - 'notification-service.microservices.svc.cluster.local:8083'
+        - 'inventory-service.microservices.svc.cluster.local:8084'
+        - 'audit-service.microservices.svc.cluster.local:8085'
       metrics_path: '/actuator/prometheus'
-      scrape_interval: 10s
+      scrape_interval: 15s
+      scrape_timeout: 10s
 
-    # Infrastructure services
-    - job_name: 'redis'
+    # Infrastructure services  
+    - job_name: 'postgres-exporter'
       static_configs:
-      - targets: ['redis.microservices:6379']
+      - targets: ['postgres.devops.svc.cluster.local:9187']
       metrics_path: '/metrics'
+      scrape_interval: 30s
 
-    - job_name: 'postgres'
+    - job_name: 'redis-exporter'
       static_configs:
-      - targets: ['postgres.microservices:5432']
+      - targets: ['redis.devops.svc.cluster.local:9121']
       metrics_path: '/metrics'
+      scrape_interval: 30s
 
-    - job_name: 'kafka'
+    # Spring Boot Actuator endpoints
+    - job_name: 'microservices-health'
       static_configs:
-      - targets: ['kafka.microservices:9092']
-      metrics_path: '/metrics'
+      - targets:
+        - 'user-service.microservices.svc.cluster.local:8081'
+        - 'order-service.microservices.svc.cluster.local:8082'
+        - 'notification-service.microservices.svc.cluster.local:8083'
+        - 'inventory-service.microservices.svc.cluster.local:8084'
+        - 'audit-service.microservices.svc.cluster.local:8085'
+      metrics_path: '/actuator/health'
+      scrape_interval: 30s
+
+    # JVM metrics from Spring Boot
+    - job_name: 'microservices-jvm'
+      static_configs:
+      - targets:
+        - 'user-service.microservices.svc.cluster.local:8081'
+        - 'order-service.microservices.svc.cluster.local:8082'
+        - 'notification-service.microservices.svc.cluster.local:8083'
+        - 'inventory-service.microservices.svc.cluster.local:8084'
+        - 'audit-service.microservices.svc.cluster.local:8085'
+      metrics_path: '/actuator/metrics'
+      scrape_interval: 30s

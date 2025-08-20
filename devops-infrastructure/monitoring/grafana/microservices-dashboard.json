@@ -1,0 +1,243 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Microservices Platform - Overview",
+    "tags": ["microservices", "spring-boot", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Health Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=\"microservices\"}",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "unit": "none",
+            "mappings": [
+              {"options": {"0": {"text": "DOWN", "color": "red"}}, "type": "value"},
+              {"options": {"1": {"text": "UP", "color": "green"}}, "type": "value"}
+            ]
+          }
+        },
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "orientation": "horizontal",
+          "textMode": "auto",
+          "colorMode": "background"
+        }
+      },
+      {
+        "id": 2,
+        "title": "HTTP Request Rate (req/sec)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum by (application) (rate(http_server_requests_seconds_count{job=\"microservices\"}[5m]))",
+            "legendFormat": "{{application}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "table",
+            "placement": "bottom"
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "reqps"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Response Time P95 (seconds)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum by (application, le) (rate(http_server_requests_seconds_bucket{job=\"microservices\"}[5m])))",
+            "legendFormat": "{{application}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "HTTP Error Rate (%)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum by (application) (rate(http_server_requests_seconds_count{job=\"microservices\",status=~\"4..|5..\"}[5m])) / sum by (application) (rate(http_server_requests_seconds_count{job=\"microservices\"}[5m])) * 100",
+            "legendFormat": "{{application}} errors",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "red", "value": 5}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "JVM Memory Usage",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum by (application) (jvm_memory_used_bytes{job=\"microservices\",area=\"heap\"}) / sum by (application) (jvm_memory_max_bytes{job=\"microservices\",area=\"heap\"}) * 100",
+            "legendFormat": "{{application}} heap",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 70},
+                {"color": "red", "value": 90}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Database Connection Pool",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "hikaricp_connections_active{job=\"microservices\"}",
+            "legendFormat": "{{application}} active",
+            "refId": "A"
+          },
+          {
+            "expr": "hikaricp_connections_max{job=\"microservices\"}",
+            "legendFormat": "{{application}} max",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Garbage Collection Time",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_sum{job=\"microservices\"}[5m])",
+            "legendFormat": "{{application}} - {{gc}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Top HTTP Endpoints by Request Rate",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (application, uri) (rate(http_server_requests_seconds_count{job=\"microservices\"}[5m])))",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 30},
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "left",
+              "displayMode": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Value"},
+              "properties": [
+                {"id": "displayName", "value": "Requests/sec"},
+                {"id": "unit", "value": "reqps"}
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "refresh": "10s",
+    "schemaVersion": 27,
+    "version": 1
+  }
+}

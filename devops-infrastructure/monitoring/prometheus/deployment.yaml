@@ -88,4 +88,4 @@ spec:
   resources:
     requests:
       storage: 50Gi
-  storageClassName: fast-ssd
+  storageClassName: hostpath

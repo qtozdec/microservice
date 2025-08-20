@@ -6,10 +6,14 @@ spring:
     name: ${SPRING_APPLICATION_NAME:user-service}
   
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/user_service_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres.devops.svc.cluster.local:5432/user_service_db}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
     username: ${SPRING_DATASOURCE_USERNAME:microservices_user}
     password: ${SPRING_DATASOURCE_PASSWORD:changeme}
+    hikari:
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:10}
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:5}
+      connection-timeout: ${SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT:20000}
   
   jpa:
     hibernate:
@@ -22,14 +26,15 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: ${SPRING_LIQUIBASE_ENABLED:true}
   
-  redis:
-    host: ${SPRING_REDIS_HOST:localhost}
-    port: ${SPRING_REDIS_PORT:6379}
-    password: ${SPRING_REDIS_PASSWORD:changeme}
-    timeout: ${SPRING_REDIS_TIMEOUT:2000ms}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis.devops.svc.cluster.local}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:changeme}
+      timeout: ${SPRING_DATA_REDIS_TIMEOUT:2000ms}
   
   kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka.devops.svc.cluster.local:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer

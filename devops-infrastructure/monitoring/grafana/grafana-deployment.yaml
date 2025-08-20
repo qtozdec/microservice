@@ -1,3 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus:9090
+      access: proxy
+      isDefault: true
+      basicAuth: false
+      editable: true
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,9 +44,9 @@ spec:
         - name: GF_SECURITY_ADMIN_USER
           value: "admin"
         - name: GF_SECURITY_ADMIN_PASSWORD
-          value: "admin123"
-        - name: GF_INSTALL_PLUGINS
-          value: "grafana-piechart-panel,grafana-worldmap-panel"
+          value: "grafana123"
+        - name: GF_USERS_ALLOW_SIGN_UP
+          value: "false"
         resources:
           requests:
             memory: "256Mi"
@@ -40,43 +57,37 @@ spec:
         volumeMounts:
         - name: grafana-storage
           mountPath: /var/lib/grafana
-        - name: grafana-config
-          mountPath: /etc/grafana/grafana.ini
-          subPath: grafana.ini
         - name: grafana-datasources
           mountPath: /etc/grafana/provisioning/datasources
         - name: grafana-dashboards-config
           mountPath: /etc/grafana/provisioning/dashboards
-        - name: grafana-dashboards
+        - name: grafana-awesome-dashboard
           mountPath: /var/lib/grafana/dashboards
         livenessProbe:
           httpGet:
             path: /api/health
             port: 3000
           initialDelaySeconds: 60
-          timeoutSeconds: 30
+          periodSeconds: 10
         readinessProbe:
           httpGet:
             path: /api/health
             port: 3000
           initialDelaySeconds: 30
-          timeoutSeconds: 30
+          periodSeconds: 10
       volumes:
       - name: grafana-storage
         persistentVolumeClaim:
           claimName: grafana-storage
-      - name: grafana-config
-        configMap:
-          name: grafana-config
       - name: grafana-datasources
         configMap:
           name: grafana-datasources
       - name: grafana-dashboards-config
         configMap:
-          name: grafana-dashboards-config
-      - name: grafana-dashboards
+          name: grafana-dashboards-provisioning
+      - name: grafana-awesome-dashboard
         configMap:
-          name: grafana-dashboards
+          name: grafana-awesome-dashboard
 ---
 apiVersion: v1
 kind: Service

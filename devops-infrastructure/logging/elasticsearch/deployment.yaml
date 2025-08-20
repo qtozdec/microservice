@@ -29,7 +29,7 @@ spec:
           privileged: true
       containers:
       - name: elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
         resources:
           limits:
             memory: "4Gi"
@@ -71,7 +71,7 @@ spec:
         app: elasticsearch
     spec:
       accessModes: ["ReadWriteOnce"]
-      storageClassName: fast-ssd
+      storageClassName: hostpath
       resources:
         requests:
           storage: 100Gi

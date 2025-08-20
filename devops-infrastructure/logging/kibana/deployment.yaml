@@ -17,14 +17,14 @@ spec:
     spec:
       containers:
       - name: kibana
-        image: docker.elastic.co/kibana/kibana:8.10.0
+        image: docker.elastic.co/kibana/kibana:7.17.0
         resources:
           limits:
-            memory: "2Gi"
-            cpu: "1000m"
-          requests:
-            memory: "1Gi"
+            memory: "512Mi"
             cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
         env:
         - name: ELASTICSEARCH_HOSTS
           value: http://elasticsearch-client:9200

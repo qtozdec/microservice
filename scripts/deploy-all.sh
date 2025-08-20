@@ -54,24 +54,24 @@ print_header "PHASE 1: PLATFORM INFRASTRUCTURE DEPLOYMENT"
 
 # Step 1: Create namespaces
 print_status "Creating namespaces..."
-kubectl apply -f platform-infrastructure/namespaces/namespaces.yaml
+kubectl apply -f ../platform-infrastructure/namespaces/namespaces.yaml
 print_success "Namespaces created"
 
 # Step 2: Create storage
 print_status "Creating storage classes and persistent volumes..."
-kubectl apply -f platform-infrastructure/storage/storage-class.yaml
+kubectl apply -f ../platform-infrastructure/storage/storage-class.yaml
 print_success "Storage infrastructure configured"
 
 # Step 3: Deploy PostgreSQL
 print_status "Deploying PostgreSQL cluster..."
-kubectl apply -f platform-infrastructure/databases/postgres/
+kubectl apply -f ../platform-infrastructure/databases/postgres/
 print_status "Waiting for PostgreSQL to be ready..."
 kubectl wait --for=condition=ready pod -l app=postgres -n devops --timeout=300s
 print_success "PostgreSQL cluster deployed and ready"
 
 # Step 4: Deploy Redis
 print_status "Deploying Redis caching cluster..."
-kubectl apply -f platform-infrastructure/caching/redis.yaml
+kubectl apply -f ../platform-infrastructure/caching/redis.yaml
 print_status "Waiting for Redis to be ready..."
 kubectl wait --for=condition=ready pod -l app=redis -n devops --timeout=120s
 print_success "Redis cluster deployed and ready"
@@ -80,28 +80,28 @@ print_header "PHASE 2: DEVOPS INFRASTRUCTURE DEPLOYMENT"
 
 # Step 5: Deploy Nexus
 print_status "Deploying Nexus Repository..."
-kubectl apply -f devops-infrastructure/artifact-management/nexus/
+kubectl apply -f ../devops-infrastructure/artifact-management/nexus/
 print_status "Waiting for Nexus to be ready..."
 kubectl wait --for=condition=available deployment/nexus -n devops --timeout=600s
 print_success "Nexus Repository deployed and ready"
 
 # Step 6: Deploy GitLab
 print_status "Deploying GitLab CE..."
-kubectl apply -f devops-infrastructure/ci-cd/gitlab/
+kubectl apply -f ../devops-infrastructure/ci-cd/gitlab/
 print_warning "GitLab deployment started. This may take 10-15 minutes to fully initialize..."
 
 print_header "PHASE 3: NETWORKING INFRASTRUCTURE"
 
 # Step 7: Deploy Ingress Controller
 print_status "Deploying NGINX Ingress Controller..."
-kubectl apply -f platform-infrastructure/networking/ingress/nginx-controller.yaml
+kubectl apply -f ../platform-infrastructure/networking/ingress/nginx-controller.yaml
 print_status "Waiting for Ingress Controller to be ready..."
 kubectl wait --for=condition=available deployment/nginx-ingress-controller -n ingress-nginx --timeout=300s
 print_success "NGINX Ingress Controller deployed"
 
 # Step 8: Create Ingress rules
 print_status "Creating Ingress routing rules..."
-kubectl apply -f platform-infrastructure/networking/ingress/ingress.yaml
+kubectl apply -f ../platform-infrastructure/networking/ingress/ingress.yaml
 print_success "Ingress routing configured"
 
 print_header "PHASE 4: APPLICATION DEPLOYMENT"
