@@ -66,7 +66,8 @@ print_status "Deploying Microservices..."
 kubectl apply -f ../k8s/microservices/user-service.yaml
 kubectl apply -f ../k8s/microservices/order-service.yaml
 kubectl apply -f ../k8s/microservices/notification-service.yaml
-print_success "Core microservices deployed"
+kubectl apply -f ../k8s/microservices/frontend.yaml
+print_success "Core microservices and frontend deployed"
 
 print_status "Note: inventory-service and audit-service deployments need to be created"
 print_status "The platform can run with user, order, and notification services"
@@ -75,6 +76,11 @@ print_status "Waiting for microservices to be ready..."
 kubectl wait --for=condition=available deployment/user-service -n microservices --timeout=300s
 kubectl wait --for=condition=available deployment/order-service -n microservices --timeout=300s
 kubectl wait --for=condition=available deployment/notification-service -n microservices --timeout=300s
+kubectl wait --for=condition=available deployment/frontend -n microservices --timeout=300s
+
+print_status "Deploying Ingress..."
+./deploy-ingress.sh
+print_success "Ingress deployed"
 
 print_success "All microservices deployed successfully!"
 

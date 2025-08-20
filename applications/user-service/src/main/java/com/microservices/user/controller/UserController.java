@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(originPatterns = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}, maxAge = 3600)
 public class UserController {
     
     @Autowired
@@ -58,8 +57,4 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
     
-    @RequestMapping(method = RequestMethod.OPTIONS)
-    public ResponseEntity<Void> handleOptions() {
-        return ResponseEntity.ok().build();
-    }
 }

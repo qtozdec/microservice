@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: microservices
+  labels:
+    app: frontend
+    component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: frontend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        # Application Configuration
+        - name: VITE_APP_NAME
+          value: "Microservices Platform"
+        - name: VITE_APP_VERSION
+          value: "1.0.0"
+        - name: VITE_APP_ENVIRONMENT
+          value: "production"
+        
+        # API Configuration - Using Ingress
+        - name: VITE_API_BASE_URL
+          value: "http://microservices.local"
+        - name: VITE_API_TIMEOUT
+          value: "10000"
+        
+        # WebSocket Configuration
+        - name: VITE_WEBSOCKET_URL
+          value: "ws://microservices.local/ws"
+        - name: VITE_WEBSOCKET_RECONNECT_INTERVAL
+          value: "5000"
+        - name: VITE_WEBSOCKET_MAX_RECONNECT_ATTEMPTS
+          value: "10"
+        
+        # Authentication
+        - name: VITE_JWT_STORAGE_KEY
+          value: "microservices_token"
+        - name: VITE_JWT_REFRESH_STORAGE_KEY
+          value: "microservices_refresh_token"
+        - name: VITE_SESSION_TIMEOUT
+          value: "1800000"
+        
+        # Feature Flags
+        - name: VITE_ENABLE_NOTIFICATIONS
+          value: "true"
+        - name: VITE_ENABLE_REAL_TIME_UPDATES
+          value: "true"
+        - name: VITE_ENABLE_DARK_MODE
+          value: "true"
+        
+        # Health probes
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Resource limits and requests
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        
+        # Security context
+        securityContext:
+          runAsNonRoot: false
+          runAsUser: 0  # root user needed for nginx
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: microservices
+  labels:
+    app: frontend
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: frontend

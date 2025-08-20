@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(originPatterns = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}, maxAge = 3600)
 public class AuthController {
     
     @Autowired
@@ -36,8 +35,4 @@ public class AuthController {
         }
     }
     
-    @RequestMapping(method = RequestMethod.OPTIONS)
-    public ResponseEntity<Void> handleOptions() {
-        return ResponseEntity.ok().build();
-    }
 }

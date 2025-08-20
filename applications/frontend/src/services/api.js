@@ -1,23 +1,24 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost';
+// Use environment variables for API base URLs
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
 const userServiceAPI = axios.create({
-  baseURL: `${API_BASE_URL}:8081/api`,
+  baseURL: `${API_BASE_URL}/api/users`,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
 const orderServiceAPI = axios.create({
-  baseURL: `${API_BASE_URL}:8082/api`,
+  baseURL: `${API_BASE_URL}/api/orders`,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
 const notificationServiceAPI = axios.create({
-  baseURL: `${API_BASE_URL}:8083/api`,
+  baseURL: `${API_BASE_URL}/api/notifications`,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -41,26 +42,26 @@ if (token) {
 }
 
 export const userService = {
-  getUsers: () => userServiceAPI.get('/users'),
-  createUser: (user) => userServiceAPI.post('/users', user),
-  getUserById: (id) => userServiceAPI.get(`/users/${id}`),
-  updateUser: (id, user) => userServiceAPI.put(`/users/${id}`, user),
-  deleteUser: (id) => userServiceAPI.delete(`/users/${id}`),
+  getUsers: () => userServiceAPI.get(''),
+  createUser: (user) => userServiceAPI.post('', user),
+  getUserById: (id) => userServiceAPI.get(`/${id}`),
+  updateUser: (id, user) => userServiceAPI.put(`/${id}`, user),
+  deleteUser: (id) => userServiceAPI.delete(`/${id}`),
 };
 
 export const orderService = {
-  getOrders: () => orderServiceAPI.get('/orders'),
-  createOrder: (order) => orderServiceAPI.post('/orders', order),
-  getOrderById: (id) => orderServiceAPI.get(`/orders/${id}`),
-  getOrdersByUserId: (userId) => orderServiceAPI.get(`/orders/user/${userId}`),
-  updateOrderStatus: (id, status) => orderServiceAPI.put(`/orders/${id}/status`, status),
+  getOrders: () => orderServiceAPI.get(''),
+  createOrder: (order) => orderServiceAPI.post('', order),
+  getOrderById: (id) => orderServiceAPI.get(`/${id}`),
+  getOrdersByUserId: (userId) => orderServiceAPI.get(`/user/${userId}`),
+  updateOrderStatus: (id, status) => orderServiceAPI.put(`/${id}/status`, status),
 };
 
 export const notificationService = {
-  getNotificationsByUserId: (userId) => notificationServiceAPI.get(`/notifications/user/${userId}`),
-  getUnreadNotificationsByUserId: (userId) => notificationServiceAPI.get(`/notifications/user/${userId}/unread`),
-  markAsRead: (id) => notificationServiceAPI.put(`/notifications/${id}/read`),
-  createNotification: (notification) => notificationServiceAPI.post('/notifications', notification),
+  getNotificationsByUserId: (userId) => notificationServiceAPI.get(`/user/${userId}`),
+  getUnreadNotificationsByUserId: (userId) => notificationServiceAPI.get(`/user/${userId}/unread`),
+  markAsRead: (id) => notificationServiceAPI.put(`/${id}/read`),
+  createNotification: (notification) => notificationServiceAPI.post('', notification),
 };
 
 export const authService = {

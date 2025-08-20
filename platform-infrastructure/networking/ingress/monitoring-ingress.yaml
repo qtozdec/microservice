@@ -1,0 +1,117 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-ingress
+  namespace: monitoring
+  labels:
+    app: monitoring-stack
+    component: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: monitoring-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required - Monitoring"
+spec:
+  ingressClassName: nginx
+  rules:
+  # Grafana Dashboard
+  - host: grafana.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
+  
+  # Prometheus Metrics
+  - host: prometheus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus
+            port:
+              number: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logging-ingress
+  namespace: logging
+  labels:
+    app: logging-stack
+    component: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  # Kibana Dashboard
+  - host: kibana.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kibana
+            port:
+              number: 5601
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: devops-ingress
+  namespace: devops
+  labels:
+    app: devops-tools
+    component: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+spec:
+  ingressClassName: nginx
+  rules:
+  # GitLab
+  - host: gitlab.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gitlab
+            port:
+              number: 80
+  
+  # Nexus Repository
+  - host: nexus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus
+            port:
+              number: 8081
+  
+  # ArgoCD
+  - host: argocd.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 80
