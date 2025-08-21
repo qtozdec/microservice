@@ -10,7 +10,8 @@ import {
   Menu, 
   X,
   User as UserIcon,
-  Search
+  Search,
+  HelpCircle
 } from 'lucide-react';
 import UserManagement from './UserManagement';
 import OrderManagement from './OrderManagement';
@@ -24,6 +25,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('orders');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   const navigation = [
     { name: 'Orders', id: 'orders', icon: ShoppingCart },
@@ -119,6 +121,15 @@ const Dashboard = () => {
                   <span className="hidden sm:inline">Search</span>
                   <kbd className="hidden sm:inline-flex ml-2 px-1.5 py-0.5 text-xs font-mono text-gray-400 dark:text-gray-500 bg-gray-200 dark:bg-gray-600 rounded">⌘K</kbd>
                 </button>
+                
+                <button
+                  onClick={() => setShowKeyboardHelp(true)}
+                  className="p-2 text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+                  title="Keyboard shortcuts (?)"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+                
                 <ThemeToggle className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600" />
                 <div className="h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                   <UserIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />

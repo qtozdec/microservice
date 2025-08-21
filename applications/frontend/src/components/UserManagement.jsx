@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { userService } from '../services/api';
 import DataTable from './DataTable';
+import { SkeletonDashboard } from './SkeletonLoader';
 import { 
   Users, 
   Plus, 

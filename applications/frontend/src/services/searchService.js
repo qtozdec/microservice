@@ -4,7 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost';
 
 // Create axios instance for search operations
 const searchAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/search`,
+  baseURL: `${API_BASE_URL}/search`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -36,7 +36,7 @@ searchAPI.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken: refreshToken
           });
           
@@ -60,17 +60,17 @@ searchAPI.interceptors.response.use(
 
 // Alternative API instances for direct service calls when search service isn't available
 const userAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/users`,
+  baseURL: `${API_BASE_URL}/users`,
   headers: { 'Content-Type': 'application/json' }
 });
 
 const orderAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/orders`,
+  baseURL: `${API_BASE_URL}/orders`,
   headers: { 'Content-Type': 'application/json' }
 });
 
 const notificationAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/notifications`,
+  baseURL: `${API_BASE_URL}/notifications`,
   headers: { 'Content-Type': 'application/json' }
 });
 

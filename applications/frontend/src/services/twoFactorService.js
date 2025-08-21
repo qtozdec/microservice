@@ -4,7 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost';
 
 // Create axios instance for 2FA operations
 const twoFactorAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/auth/2fa`,
+  baseURL: `${API_BASE_URL}/auth/2fa`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -36,7 +36,7 @@ twoFactorAPI.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken: refreshToken
           });
           

@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { setAuthToken } from './services/api';
 import webSocketService from './services/websocket';
+import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
+import KeyboardShortcuts from './components/KeyboardShortcuts';
+import GlobalSearch from './components/GlobalSearch';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import LoadingSpinner from './components/LoadingSpinner';
 
 function AppContent() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth();
+  const { toggleTheme } = useTheme();
   const [showRegister, setShowRegister] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
   // Set auth token when user is authenticated
   useEffect(() => {
@@ -47,6 +53,25 @@ function AppContent() {
     };
   }, [user?.userId, isAuthenticated]);
 
+  // Keyboard shortcuts configuration
+  const keyboardShortcuts = {
+    'ctrl+k': () => setShowGlobalSearch(true),
+    '?': () => setShowKeyboardShortcuts(true),
+    'escape': () => {
+      setShowGlobalSearch(false);
+      setShowKeyboardShortcuts(false);
+    },
+    'ctrl+/': () => toggleTheme(),
+    'ctrl+shift+l': () => {
+      if (isAuthenticated()) {
+        logout();
+      }
+    }
+  };
+
+  // Apply keyboard shortcuts only when authenticated
+  useKeyboardShortcuts(isAuthenticated() ? keyboardShortcuts : {});
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -75,6 +100,18 @@ function AppContent() {
   return (
     <>
       <Dashboard />
+      
+      {/* Global Components */}
+      <GlobalSearch 
+        isOpen={showGlobalSearch} 
+        onClose={() => setShowGlobalSearch(false)} 
+      />
+      
+      <KeyboardShortcuts 
+        isOpen={showKeyboardShortcuts} 
+        onClose={() => setShowKeyboardShortcuts(false)} 
+      />
+      
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -104,26 +141,6 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <AppContent />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
-            success: {
-              style: {
-                background: '#10b981',
-              },
-            },
-            error: {
-              style: {
-                background: '#ef4444',
-              },
-            },
-          }}
-        />
       </AuthProvider>
     </ThemeProvider>
   );

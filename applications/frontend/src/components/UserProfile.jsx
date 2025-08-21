@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { profileService } from '../services/profileService';
 import TwoFactorAuth from './TwoFactorAuth';
+import { SkeletonUserProfile } from './SkeletonLoader';
 import { 
   User, 
   Mail, 
@@ -15,8 +16,7 @@ import {
   Camera,
   Shield,
   Clock,
-  Settings,
-  Upload
+  Settings
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

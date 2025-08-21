@@ -4,7 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost';
 
 // Create axios instance for profile operations
 const profileAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/users`,
+  baseURL: `${API_BASE_URL}/users`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -36,7 +36,7 @@ profileAPI.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken: refreshToken
           });
           
@@ -87,7 +87,7 @@ export const profileService = {
 
   // Get avatar URL
   getAvatarUrl: (userId, filename) => {
-    return `${API_BASE_URL}/api/users/${userId}/avatar/${filename}`;
+    return `${API_BASE_URL}/users/${userId}/avatar/${filename}`;
   }
 };
 

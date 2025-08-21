@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/audit")
+@RequestMapping("/audit")
 @CrossOrigin(origins = "*")
 public class AuditController {
 

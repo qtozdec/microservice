@@ -4,28 +4,28 @@ import axios from 'axios';
 const API_BASE_URL = '';
 
 const userServiceAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/users`,
+  baseURL: `${API_BASE_URL}/users`,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
 const authServiceAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/auth`,
+  baseURL: `${API_BASE_URL}/auth`,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
 const orderServiceAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/orders`,
+  baseURL: `${API_BASE_URL}/orders`,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
 const notificationServiceAPI = axios.create({
-  baseURL: `${API_BASE_URL}/api/notifications`,
+  baseURL: `${API_BASE_URL}/notifications`,
   headers: {
     'Content-Type': 'application/json'
   }

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import ExportModal from './ExportModal';
+import { SkeletonTable } from './SkeletonLoader';
 import {
   ChevronUp,
   ChevronDown,
@@ -335,8 +336,14 @@ const DataTable = ({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      {loading ? (
+        <SkeletonTable 
+          rows={pageSize} 
+          columns={columns.length + (onView || onEdit || onDelete ? 2 : 1)} 
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               <th className="px-4 py-3 text-left">
@@ -434,8 +441,9 @@ const DataTable = ({
               ))
             )}
           </tbody>
-        </table>
-      </div>
+          </table>
+        </div>
+      )}
 
       {/* Pagination */}
       {pagination && totalPages > 1 && (

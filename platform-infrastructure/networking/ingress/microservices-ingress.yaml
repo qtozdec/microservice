@@ -34,7 +34,7 @@ spec:
       paths:
       # API routes must come before root path
       # User Service API
-      - path: /api/users
+      - path: /users
         pathType: Prefix
         backend:
           service:
@@ -43,7 +43,7 @@ spec:
               number: 8081
       
       # Authentication endpoints (also handled by user-service)
-      - path: /api/auth
+      - path: /auth
         pathType: Prefix
         backend:
           service:
@@ -52,7 +52,7 @@ spec:
               number: 8081
       
       # Order Service API
-      - path: /api/orders
+      - path: /orders
         pathType: Prefix
         backend:
           service:
@@ -61,7 +61,7 @@ spec:
               number: 8082
       
       # Notification Service API
-      - path: /api/notifications
+      - path: /notifications
         pathType: Prefix
         backend:
           service:

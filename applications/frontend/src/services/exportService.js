@@ -331,7 +331,7 @@ class ExportService {
    * @returns {Promise} - Promise that resolves when export is complete
    */
   showExportDialog(data, columns, defaultFilename = 'export') {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       // This would typically show a modal, but for now we'll provide the options directly
       const exportOptions = {
         excel: () => this.exportToExcel(data, defaultFilename, columns),
