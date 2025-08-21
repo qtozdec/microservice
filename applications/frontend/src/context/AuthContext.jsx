@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { setAuthToken } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -70,11 +71,23 @@ export const AuthProvider = ({ children }) => {
     console.log('AuthContext: login completed, user set to:', userData);
   };
 
+  const updateUser = (updatedUserData) => {
+    console.log('AuthContext: updating user data:', updatedUserData);
+    const newUser = { ...user, ...updatedUserData };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    console.log('AuthContext: user data updated:', newUser);
+  };
+
   const logout = () => {
+    console.log('AuthContext: Logging out user');
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('refreshToken');
+    setAuthToken(null); // Clear auth token from API headers
+    console.log('AuthContext: Logout completed, all tokens cleared');
   };
 
   const isAuthenticated = () => {
@@ -92,6 +105,7 @@ export const AuthProvider = ({ children }) => {
     token,
     login,
     logout,
+    updateUser,
     isAuthenticated,
     loading
   };

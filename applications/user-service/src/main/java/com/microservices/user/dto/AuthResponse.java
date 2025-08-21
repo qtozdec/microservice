@@ -4,6 +4,7 @@ import com.microservices.user.model.Role;
 
 public class AuthResponse {
     private String token;
+    private String refreshToken;
     private String email;
     private String name;
     private Role role;
@@ -11,8 +12,9 @@ public class AuthResponse {
     
     public AuthResponse() {}
     
-    public AuthResponse(String token, String email, String name, Role role, Long userId) {
+    public AuthResponse(String token, String refreshToken, String email, String name, Role role, Long userId) {
         this.token = token;
+        this.refreshToken = refreshToken;
         this.email = email;
         this.name = name;
         this.role = role;
@@ -25,6 +27,14 @@ public class AuthResponse {
     
     public void setToken(String token) {
         this.token = token;
+    }
+    
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+    
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
     
     public String getEmail() {

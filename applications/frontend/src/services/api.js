@@ -1,10 +1,17 @@
 import axios from 'axios';
 
-// Use environment variables for API base URLs
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+// Use relative paths for API calls to work with ingress
+const API_BASE_URL = '';
 
 const userServiceAPI = axios.create({
   baseURL: `${API_BASE_URL}/api/users`,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const authServiceAPI = axios.create({
+  baseURL: `${API_BASE_URL}/api/auth`,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -27,10 +34,12 @@ const notificationServiceAPI = axios.create({
 const setAuthToken = (token) => {
   if (token) {
     userServiceAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    authServiceAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     orderServiceAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     notificationServiceAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
     delete userServiceAPI.defaults.headers.common['Authorization'];
+    delete authServiceAPI.defaults.headers.common['Authorization'];
     delete orderServiceAPI.defaults.headers.common['Authorization'];
     delete notificationServiceAPI.defaults.headers.common['Authorization'];
   }
@@ -65,8 +74,9 @@ export const notificationService = {
 };
 
 export const authService = {
-  login: (credentials) => userServiceAPI.post('/auth/login', credentials),
-  register: (userData) => userServiceAPI.post('/auth/register', userData),
+  login: (credentials) => authServiceAPI.post('/login', credentials),
+  register: (userData) => authServiceAPI.post('/register', userData),
+  refresh: (refreshToken) => authServiceAPI.post('/refresh', { refreshToken }),
 };
 
 export { setAuthToken };

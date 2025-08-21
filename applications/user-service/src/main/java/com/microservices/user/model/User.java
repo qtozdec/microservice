@@ -26,6 +26,21 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    @Column
+    private String phone;
+    
+    @Column
+    private String address;
+    
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+    
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+    
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+    
     public User() {
         this.createdAt = LocalDateTime.now();
     }
@@ -88,5 +103,45 @@ public class User {
     
     public void setRole(Role role) {
         this.role = role;
+    }
+    
+    public String getPhone() {
+        return phone;
+    }
+    
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public String getBio() {
+        return bio;
+    }
+    
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+    
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+    
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+    
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+    
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
     }
 }

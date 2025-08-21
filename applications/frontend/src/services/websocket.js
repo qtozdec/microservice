@@ -1,4 +1,6 @@
 import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
+import toast from 'react-hot-toast';
 
 class WebSocketService {
   constructor() {
@@ -6,49 +8,94 @@ class WebSocketService {
     this.connected = false;
     this.subscriptions = new Map();
     this.messageHandlers = new Map();
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 1000;
   }
 
-  connect(url = 'ws://localhost:8084/ws') {
+  connect(userId) {
+    if (this.connected) {
+      console.log('WebSocket: Already connected');
+      return Promise.resolve();
+    }
+
+    console.log('WebSocket: Connecting...', { userId });
+
     return new Promise((resolve, reject) => {
+      // Create STOMP client with SockJS
       this.client = new Client({
-        brokerURL: url,
-        connectHeaders: {},
-        debug: (str) => {
-          console.log('STOMP: ' + str);
+        webSocketFactory: () => new SockJS(`${window.location.origin}/ws`),
+        connectHeaders: {
+          userId: userId?.toString() || ''
         },
-        reconnectDelay: 5000,
+        debug: (str) => {
+          console.log('WebSocket Debug:', str);
+        },
+        reconnectDelay: this.reconnectDelay,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
       });
 
       this.client.onConnect = (frame) => {
-        console.log('Connected: ' + frame);
+        console.log('WebSocket: Connected', frame);
         this.connected = true;
+        this.reconnectAttempts = 0;
         
-        // Subscribe to inventory updates
+        // Show connection toast
+        toast.success('🔔 Real-time notifications connected', {
+          duration: 3000,
+          position: 'top-right',
+        });
+
+        // Subscribe to user-specific notifications
+        if (userId) {
+          this.subscribeToUserNotifications(userId);
+        }
+
+        // Subscribe to global notifications
+        this.subscribeToGlobalNotifications();
+        
+        // Subscribe to inventory updates (backward compatibility)
         this.subscribe('/topic/inventory', this.handleInventoryUpdate.bind(this));
-        
-        // Subscribe to notifications
-        this.subscribe('/topic/notifications', this.handleNotification.bind(this));
+
+        // Send subscription message
+        this.client.publish({
+          destination: '/app/subscribe',
+          body: JSON.stringify({ userId })
+        });
         
         resolve(frame);
       };
 
       this.client.onStompError = (frame) => {
-        console.error('Broker reported error: ' + frame.headers['message']);
-        console.error('Additional details: ' + frame.body);
+        console.error('WebSocket: STOMP Error', frame);
         this.connected = false;
+        
+        toast.error('🔌 Connection error occurred', {
+          duration: 4000,
+          position: 'top-right',
+        });
+        
         reject(frame);
       };
 
-      this.client.onWebSocketClose = (event) => {
-        console.log('WebSocket connection closed', event);
+      this.client.onWebSocketError = (error) => {
+        console.error('WebSocket: Error', error);
         this.connected = false;
       };
 
       this.client.onDisconnect = () => {
-        console.log('STOMP connection disconnected');
+        console.log('WebSocket: Disconnected');
         this.connected = false;
+        this.subscriptions.clear();
+        
+        // Only show disconnect toast if not intentionally disconnected
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          toast.error('🔌 Connection lost, attempting to reconnect...', {
+            duration: 3000,
+            position: 'top-right',
+          });
+        }
       };
 
       this.client.activate();
@@ -56,12 +103,54 @@ class WebSocketService {
   }
 
   disconnect() {
-    if (this.client && this.connected) {
-      this.client.deactivate();
+    if (this.client) {
+      console.log('WebSocket: Disconnecting...');
       this.connected = false;
       this.subscriptions.clear();
       this.messageHandlers.clear();
+      this.client.deactivate();
+      
+      toast('🔌 Disconnected from real-time notifications', {
+        duration: 2000,
+        position: 'top-right',
+      });
     }
+  }
+
+  subscribeToUserNotifications(userId) {
+    const destination = `/user/${userId}/queue/notifications`;
+    
+    if (this.subscriptions.has(destination)) {
+      console.log('WebSocket: Already subscribed to user notifications');
+      return;
+    }
+
+    const subscription = this.client.subscribe(destination, (message) => {
+      const notification = JSON.parse(message.body);
+      console.log('WebSocket: User notification received', notification);
+      this.handleNotification(notification);
+    });
+
+    this.subscriptions.set(destination, subscription);
+    console.log('WebSocket: Subscribed to user notifications', destination);
+  }
+
+  subscribeToGlobalNotifications() {
+    const destination = '/topic/notifications';
+    
+    if (this.subscriptions.has(destination)) {
+      console.log('WebSocket: Already subscribed to global notifications');
+      return;
+    }
+
+    const subscription = this.client.subscribe(destination, (message) => {
+      const notification = JSON.parse(message.body);
+      console.log('WebSocket: Global notification received', notification);
+      this.handleNotification(notification);
+    });
+
+    this.subscriptions.set(destination, subscription);
+    console.log('WebSocket: Subscribed to global notifications', destination);
   }
 
   subscribe(destination, handler) {
@@ -120,18 +209,58 @@ class WebSocketService {
     handlers.forEach(handler => handler(message));
   }
 
-  handleNotification(message) {
-    console.log('Notification received:', message);
+  handleNotification(notification) {
+    console.log('Notification received:', notification);
     
-    // Dispatch custom event for notifications
+    // Play sound for important notifications
+    if (notification.type === 'error' || notification.type === 'warning') {
+      this.playNotificationSound();
+    }
+
+    // Show toast notification
+    const toastOptions = {
+      duration: 5000,
+      position: 'top-right',
+      style: {
+        background: this.getToastColor(notification.type),
+        color: 'white',
+      },
+    };
+
+    const icon = this.getNotificationIcon(notification.type);
+    const message = `${icon} ${notification.title}: ${notification.message}`;
+
+    switch (notification.type) {
+      case 'success':
+        toast.success(message, toastOptions);
+        break;
+      case 'error':
+        toast.error(message, { ...toastOptions, duration: 8000 });
+        break;
+      case 'warning':
+        toast(message, { ...toastOptions, icon: '⚠️' });
+        break;
+      case 'info':
+      default:
+        toast(message, { ...toastOptions, icon: 'ℹ️' });
+        break;
+    }
+
+    // Store notification for notification center
+    this.storeNotification(notification);
+
+    // Show browser notification if permission granted
+    this.showBrowserNotification(notification);
+    
+    // Dispatch custom event for notifications (backward compatibility)
     const event = new CustomEvent('newNotification', {
-      detail: message
+      detail: notification
     });
     window.dispatchEvent(event);
 
     // Call registered handlers
     const handlers = this.messageHandlers.get('notifications') || [];
-    handlers.forEach(handler => handler(message));
+    handlers.forEach(handler => handler(notification));
   }
 
   // Register message handlers
@@ -157,6 +286,105 @@ class WebSocketService {
       if (index > -1) {
         handlers.splice(index, 1);
       }
+    }
+  }
+
+  // Utility methods for notifications
+  getNotificationIcon(type) {
+    switch (type) {
+      case 'success': return '✅';
+      case 'error': return '❌';
+      case 'warning': return '⚠️';
+      case 'info': return 'ℹ️';
+      default: return '🔔';
+    }
+  }
+
+  getToastColor(type) {
+    switch (type) {
+      case 'success': return '#10b981';
+      case 'error': return '#ef4444';
+      case 'warning': return '#f59e0b';
+      case 'info': return '#3b82f6';
+      default: return '#6b7280';
+    }
+  }
+
+  playNotificationSound() {
+    try {
+      // Create a simple beep sound
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (error) {
+      console.warn('WebSocket: Could not play notification sound', error);
+    }
+  }
+
+  storeNotification(notification) {
+    try {
+      const storedNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+      const newNotification = {
+        ...notification,
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        read: false
+      };
+      
+      storedNotifications.unshift(newNotification);
+      
+      // Keep only last 50 notifications
+      if (storedNotifications.length > 50) {
+        storedNotifications.splice(50);
+      }
+      
+      localStorage.setItem('notifications', JSON.stringify(storedNotifications));
+      
+      // Dispatch custom event for notification center
+      window.dispatchEvent(new CustomEvent('notificationStored', { 
+        detail: newNotification 
+      }));
+    } catch (error) {
+      console.error('WebSocket: Error storing notification', error);
+    }
+  }
+
+  showBrowserNotification(notification) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(notification.title, {
+          body: notification.message,
+          icon: '/favicon.ico',
+          tag: notification.type,
+        });
+      } catch (error) {
+        console.warn('WebSocket: Could not show browser notification', error);
+      }
+    }
+  }
+
+  requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          toast.success('🔔 Browser notifications enabled', {
+            duration: 3000,
+            position: 'top-right',
+          });
+        }
+      });
     }
   }
 

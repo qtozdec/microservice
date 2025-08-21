@@ -26,10 +26,13 @@ const Register = ({ onToggleView }) => {
       console.log('Register: API response:', response.data);
 
       if (response.data && response.data.token) {
-        const { token, ...userData } = response.data;
+        const { token, refreshToken, ...userData } = response.data;
         
         console.log('Register: Setting auth token and user data');
         setAuthToken(token);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
         login(userData, token);
         console.log('Register: Registration and login completed successfully');
       } else {

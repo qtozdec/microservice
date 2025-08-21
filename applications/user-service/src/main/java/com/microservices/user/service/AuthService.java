@@ -46,8 +46,11 @@ public class AuthService {
             user.getId()
         );
         
+        var refreshToken = jwtService.generateRefreshToken(user.getEmail());
+        
         return new AuthResponse(
             jwtToken, 
+            refreshToken,
             user.getEmail(), 
             user.getName(), 
             user.getRole(),
@@ -72,12 +75,43 @@ public class AuthService {
             user.getId()
         );
         
+        var refreshToken = jwtService.generateRefreshToken(user.getEmail());
+        
         return new AuthResponse(
             jwtToken,
+            refreshToken,
             user.getEmail(),
             user.getName(),
             user.getRole(),
             user.getId()
         );
+    }
+    
+    public AuthResponse refreshToken(String refreshToken) {
+        String email = jwtService.extractUsername(refreshToken);
+        
+        if (email != null && jwtService.isTokenValid(refreshToken)) {
+            var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            var newJwtToken = jwtService.generateToken(
+                user.getEmail(),
+                user.getRole().getAuthority(),
+                user.getId()
+            );
+            
+            var newRefreshToken = jwtService.generateRefreshToken(user.getEmail());
+            
+            return new AuthResponse(
+                newJwtToken,
+                newRefreshToken,
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                user.getId()
+            );
+        }
+        
+        throw new RuntimeException("Invalid refresh token");
     }
 }

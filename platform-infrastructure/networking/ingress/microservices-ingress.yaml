@@ -16,8 +16,16 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
     nginx.ingress.kubernetes.io/cors-max-age: "3600"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # Rate Limiting - DDoS Protection
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/rate-limit-connections: "10"
+    # Stricter limits for auth endpoints
+    nginx.ingress.kubernetes.io/rate-limit-rps: "10"
+    # WebSocket support
+    nginx.ingress.kubernetes.io/websocket-services: "notification-service"
 spec:
   ingressClassName: nginx
   rules:
@@ -54,6 +62,15 @@ spec:
       
       # Notification Service API
       - path: /api/notifications
+        pathType: Prefix
+        backend:
+          service:
+            name: notification-service
+            port:
+              number: 8083
+      
+      # WebSocket endpoint for real-time notifications
+      - path: /ws
         pathType: Prefix
         backend:
           service:

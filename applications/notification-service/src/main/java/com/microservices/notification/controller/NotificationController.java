@@ -44,6 +44,24 @@ public class NotificationController {
         }
     }
     
+    @PostMapping("/test")
+    public ResponseEntity<String> testNotification(@RequestParam(required = false) Long userId) {
+        try {
+            Notification testNotification = new Notification();
+            testNotification.setMessage("Test notification: This is a test notification from the system");
+            testNotification.setType(com.microservices.notification.model.NotificationType.SYSTEM_EVENT);
+            if (userId != null) {
+                testNotification.setUserId(userId);
+            }
+            
+            Notification created = notificationService.createNotification(testNotification);
+            return ResponseEntity.ok("Test notification sent successfully. ID: " + created.getId());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body("Failed to send test notification: " + e.getMessage());
+        }
+    }
+    
     @RequestMapping(method = RequestMethod.OPTIONS)
     public ResponseEntity<Void> handleOptions() {
         return ResponseEntity.ok().build();

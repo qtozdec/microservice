@@ -22,8 +22,15 @@ public class JwtService {
     @Value("${jwt.expiration:86400000}") // 24 hours
     private long jwtExpiration;
     
+    @Value("${jwt.refresh.expiration:604800000}") // 7 days
+    private long refreshExpiration;
+    
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+    
+    public String extractUsername(String token) {
+        return extractEmail(token);
     }
     
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -42,6 +49,10 @@ public class JwtService {
         return buildToken(extraClaims, email, jwtExpiration);
     }
     
+    public String generateRefreshToken(String email) {
+        return buildToken(new HashMap<>(), email, refreshExpiration);
+    }
+    
     private String buildToken(Map<String, Object> extraClaims, String email, long expiration) {
         return Jwts.builder()
                 .setClaims(extraClaims)
@@ -55,6 +66,10 @@ public class JwtService {
     public boolean isTokenValid(String token, String email) {
         final String tokenEmail = extractEmail(token);
         return (tokenEmail.equals(email)) && !isTokenExpired(token);
+    }
+    
+    public boolean isTokenValid(String token) {
+        return !isTokenExpired(token);
     }
     
     private boolean isTokenExpired(String token) {
