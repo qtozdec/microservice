@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { profileService } from '../services/profileService';
+import TwoFactorAuth from './TwoFactorAuth';
 import { 
   User, 
   Mail, 
@@ -369,6 +370,9 @@ const UserProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Two-Factor Authentication Section */}
+      <TwoFactorAuth />
     </div>
   );
 };

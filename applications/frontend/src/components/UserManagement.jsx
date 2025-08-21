@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { userService } from '../services/api';
+import DataTable from './DataTable';
 import { 
   Users, 
   Plus, 
@@ -19,7 +20,6 @@ const UserManagement = () => {
   const [error, setError] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -85,10 +85,6 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const getRoleColor = (role) => {
     return role === 'ADMIN' 
@@ -126,88 +122,73 @@ const UserManagement = () => {
         </div>
       )}
 
-      {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search users by name or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-
-      {/* Users Grid */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-        {loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent mx-auto"></div>
-            <p className="mt-2 text-gray-500">Loading users...</p>
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="p-8 text-center">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No users found</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-            {filteredUsers.map((user) => (
-              <div key={user.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200 hover:shadow-md transition duration-200">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <UserIcon className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
-                        <p className="text-sm text-gray-500 flex items-center">
-                          <Mail className="h-4 w-4 mr-1" />
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(user.role)}`}>
-                        <Shield className="h-3 w-3 mr-1" />
-                        {user.role}
-                      </span>
-                      
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEdit(user)}
-                          className="p-2 text-gray-400 hover:text-blue-600 transition duration-200"
-                          title="Edit user"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 transition duration-200"
-                          title="Delete user"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+      {/* Users Table */}
+      <DataTable
+        data={users}
+        columns={[
+          {
+            key: 'name',
+            header: 'Name',
+            render: (value, row) => (
+              <div className="flex items-center space-x-3">
+                <div className="h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                  <UserIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
-                    Active since {new Date(user.createdAt || Date.now()).toLocaleDateString()}
-                  </div>
-                </div>
+                <span className="font-medium">{value}</span>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            )
+          },
+          {
+            key: 'email',
+            header: 'Email',
+            render: (value) => (
+              <div className="flex items-center space-x-2">
+                <Mail className="h-4 w-4 text-gray-400" />
+                <span>{value}</span>
+              </div>
+            )
+          },
+          {
+            key: 'role',
+            header: 'Role',
+            filterType: 'select',
+            filterOptions: [
+              { value: 'USER', label: 'User' },
+              { value: 'ADMIN', label: 'Administrator' }
+            ],
+            render: (value) => (
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(value)}`}>
+                <Shield className="h-3 w-3 mr-1" />
+                {value}
+              </span>
+            )
+          },
+          {
+            key: 'createdAt',
+            header: 'Created',
+            type: 'date',
+            sortable: true,
+            render: (value) => (
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span>{new Date(value || Date.now()).toLocaleDateString()}</span>
+              </div>
+            )
+          }
+        ]}
+        loading={loading}
+        onEdit={handleEdit}
+        onDelete={(user) => handleDelete(user.id)}
+        onRefresh={fetchUsers}
+        searchable={true}
+        filterable={true}
+        sortable={true}
+        pagination={true}
+        pageSize={10}
+        exportable={true}
+        exportFilename="users-export"
+        exportTitle="User Management Export"
+      />
 
       {/* Create/Edit User Modal */}
       {showCreateForm && (

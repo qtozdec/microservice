@@ -18,7 +18,10 @@
     "@headlessui/react": "^1.7.17",
     "@stomp/stompjs": "^7.0.0",
     "sockjs-client": "^1.6.1",
-    "react-hot-toast": "^2.4.1"
+    "react-hot-toast": "^2.4.1",
+    "xlsx": "^0.18.5",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.5.31"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
