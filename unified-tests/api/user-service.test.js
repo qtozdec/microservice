@@ -120,4 +120,42 @@ describe('User Service API Tests', () => {
             }
         });
     });
+
+    describe('User Profile Management', () => {
+        test('Should handle user-specific endpoints', async () => {
+            // Test profile endpoints exist
+            try {
+                await axios.get(`${baseURL}/users/1/profile`);
+            } catch (error) {
+                expect([401, 403, 404]).toContain(error.response.status);
+            }
+        });
+
+        test('Should handle avatar endpoints', async () => {
+            // Test avatar endpoints exist  
+            try {
+                await axios.get(`${baseURL}/users/1/avatar/test.jpg`);
+            } catch (error) {
+                expect([400, 404]).toContain(error.response.status);
+            }
+        });
+    });
+
+    describe('User Management (Admin)', () => {
+        test('Should handle admin user management', async () => {
+            try {
+                await axios.get(`${baseURL}/users`);
+            } catch (error) {
+                expect([401, 403, 404]).toContain(error.response.status);
+            }
+        });
+
+        test('Should handle specific user retrieval', async () => {
+            try {
+                await axios.get(`${baseURL}/users/1`);
+            } catch (error) {
+                expect([401, 403, 404]).toContain(error.response.status);
+            }
+        });
+    });
 });

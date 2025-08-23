@@ -11,17 +11,19 @@ global.testConfig = {
   endpoints: {
     userService: process.env.USER_SERVICE_URL || 'http://localhost:8081',
     orderService: process.env.ORDER_SERVICE_URL || 'http://localhost:8082',
-    inventoryService: process.env.INVENTORY_SERVICE_URL || 'http://localhost:8083',
-    notificationService: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:8084',
+    inventoryService: process.env.INVENTORY_SERVICE_URL || 'http://localhost:8084',
+    notificationService: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:8083',
     auditService: process.env.AUDIT_SERVICE_URL || 'http://localhost:8085'
   },
   testUser: {
-    email: 'test@example.com',
-    password: 'testPassword123'
+    username: 'user@example.com',
+    email: 'user@example.com',
+    password: 'user123'
   },
   adminUser: {
+    username: 'admin@example.com',
     email: 'admin@example.com',
-    password: 'adminPassword123'
+    password: 'admin123'
   },
   database: {
     host: process.env.DB_HOST || 'localhost',

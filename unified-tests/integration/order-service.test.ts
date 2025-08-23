@@ -9,7 +9,7 @@ describe('Order Service Integration Tests', () => {
   beforeAll(async () => {
     // Get auth token for testing
     const loginResponse = await axios.post(`${config.endpoints.userService}/auth/login`, {
-      email: config.testUser.username,
+      email: config.testUser.email,
       password: config.testUser.password
     });
     authToken = loginResponse.data.token;
