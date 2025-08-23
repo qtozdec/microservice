@@ -2,6 +2,7 @@ package com.microservices.audit.controller;
 
 import com.microservices.audit.model.AuditEvent;
 import com.microservices.audit.service.AuditService;
+import com.microservices.audit.dto.AuditEventRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -117,5 +119,54 @@ public class AuditController {
             @RequestParam String details) {
         auditService.logComplianceEvent(regulation, action, entityType, entityId, userId, details);
         return ResponseEntity.ok("Compliance event logged successfully");
+    }
+
+    @PostMapping("/events")
+    public ResponseEntity<AuditEvent> createAuditEvent(@RequestBody AuditEventRequest request) {
+        try {
+            AuditEvent auditEvent = new AuditEvent();
+            auditEvent.setEventType(request.getEventType());
+            auditEvent.setServiceName(request.getServiceName());
+            auditEvent.setUserId(request.getUserId());
+            auditEvent.setSessionId(request.getSessionId());
+            auditEvent.setResourceType(request.getResourceType());
+            auditEvent.setResourceId(request.getResourceId());
+            auditEvent.setAction(request.getAction());
+            auditEvent.setDescription(request.getDescription());
+            auditEvent.setIpAddress(request.getIpAddress());
+            auditEvent.setUserAgent(request.getUserAgent());
+            
+            // Parse result enum
+            if (request.getResult() != null) {
+                try {
+                    auditEvent.setResult(AuditEvent.AuditResult.valueOf(request.getResult()));
+                } catch (IllegalArgumentException e) {
+                    auditEvent.setResult(AuditEvent.AuditResult.SUCCESS);
+                }
+            } else {
+                auditEvent.setResult(AuditEvent.AuditResult.SUCCESS);
+            }
+            
+            auditEvent.setErrorMessage(request.getErrorMessage());
+            auditEvent.setMetadata(request.getMetadata());
+            auditEvent.setDurationMs(request.getDurationMs());
+            
+            if (request.getTimestamp() != null) {
+                auditEvent.setTimestamp(request.getTimestamp());
+            }
+            
+            AuditEvent savedEvent = auditService.createAuditEvent(
+                request.getServiceName(),
+                request.getAction(),
+                request.getResourceType(),
+                request.getResourceId(),
+                request.getUserId(),
+                request.getMetadata()
+            );
+            
+            return ResponseEntity.ok(savedEvent);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 }

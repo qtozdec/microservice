@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-create-admin-user" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM users WHERE email = 'admin@microservices.local'</sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO users (name, email, password, role, enabled, created_at, updated_at) 
+            VALUES (
+                'Administrator', 
+                'admin@microservices.local', 
+                '$2a$10$YKw8/z.qUYw4f8lJ6o4fXeZwFZFp4x4vQ0CfhzR6b4hH.KCdG8o1G', 
+                'ADMIN', 
+                true, 
+                CURRENT_TIMESTAMP, 
+                CURRENT_TIMESTAMP
+            );
+        </sql>
+        <rollback>
+            DELETE FROM users WHERE email = 'admin@microservices.local';
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

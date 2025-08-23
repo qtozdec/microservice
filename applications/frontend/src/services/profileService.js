@@ -1,13 +1,11 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost';
+// Use relative paths for API calls to work with ingress
+const API_BASE_URL = '';
 
 // Create axios instance for profile operations
 const profileAPI = axios.create({
   baseURL: `${API_BASE_URL}/users`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Add request interceptor to include auth token
@@ -36,7 +34,7 @@ profileAPI.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+          const response = await axios.post(`/auth/refresh`, {
             refreshToken: refreshToken
           });
           
@@ -64,9 +62,10 @@ export const profileService = {
     const formData = new FormData();
     formData.append('file', file);
     
+    const token = localStorage.getItem('token');
     const response = await profileAPI.post(`/${userId}/avatar`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`,
       },
     });
     
@@ -75,19 +74,23 @@ export const profileService = {
 
   // Update user profile
   updateProfile: async (userId, profileData) => {
-    const response = await profileAPI.put(`/${userId}/profile`, profileData);
+    const response = await profileAPI.put(`/${userId}/profile`, profileData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     return response.data;
   },
 
   // Get user profile
   getProfile: async (userId) => {
-    const response = await profileAPI.get(`/${userId}`);
+    const response = await profileAPI.get(`/${userId}/profile`);
     return response.data;
   },
 
   // Get avatar URL
   getAvatarUrl: (userId, filename) => {
-    return `${API_BASE_URL}/users/${userId}/avatar/${filename}`;
+    return `/users/${userId}/avatar/${filename}`;
   }
 };
 

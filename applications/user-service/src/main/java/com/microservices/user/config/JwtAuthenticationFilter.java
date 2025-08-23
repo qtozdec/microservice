@@ -33,6 +33,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         
+        // Skip JWT authentication only for specific auth endpoints
+        String requestPath = request.getServletPath();
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
+        
+        System.out.println("JWT Filter - Path: " + requestPath + ", URI: " + requestURI + ", Method: " + method);
+        
+        // Skip authentication only for login, register, and health endpoints
+        if (requestPath.equals("/auth/login") || 
+            requestPath.equals("/auth/register") || 
+            requestPath.equals("/auth/refresh") ||
+            requestPath.startsWith("/health") || 
+            requestPath.startsWith("/actuator/")) {
+            System.out.println("JWT Filter - Skipping authentication for: " + requestPath);
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;

@@ -82,7 +82,7 @@ public class UserService {
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         
         // Update user avatar URL
-        String avatarUrl = "/api/users/" + userId + "/avatar/" + filename;
+        String avatarUrl = "/users/" + userId + "/avatar/" + filename;
         user.setAvatarUrl(avatarUrl);
         userRepository.save(user);
         

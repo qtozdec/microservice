@@ -41,6 +41,12 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
     
+    @Column(name = "two_factor_enabled")
+    private boolean twoFactorEnabled = false;
+    
+    @Column(name = "two_factor_secret")
+    private String twoFactorSecret;
+    
     public User() {
         this.createdAt = LocalDateTime.now();
     }
@@ -143,5 +149,21 @@ public class User {
     
     public void setLastLoginAt(LocalDateTime lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
+    }
+    
+    public boolean isTwoFactorEnabled() {
+        return twoFactorEnabled;
+    }
+    
+    public void setTwoFactorEnabled(boolean twoFactorEnabled) {
+        this.twoFactorEnabled = twoFactorEnabled;
+    }
+    
+    public String getTwoFactorSecret() {
+        return twoFactorSecret;
+    }
+    
+    public void setTwoFactorSecret(String twoFactorSecret) {
+        this.twoFactorSecret = twoFactorSecret;
     }
 }

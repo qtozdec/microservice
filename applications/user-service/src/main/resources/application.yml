@@ -60,6 +60,20 @@ jwt:
   expiration: ${JWT_EXPIRATION:86400000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
+# Logging Configuration
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.microservices.user: DEBUG
+    org.springframework.web: DEBUG
+    root: INFO
+
+# Audit Configuration
+audit:
+  service:
+    url: ${AUDIT_SERVICE_URL:http://audit-service.microservices.svc.cluster.local:8085}
+    enabled: ${AUDIT_SERVICE_ENABLED:true}
+
 # Management/Actuator
 management:
   endpoints:

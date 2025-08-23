@@ -5,6 +5,15 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
+    <!-- Create users table -->
+    <include file="db/changelog/changeset/000-create-users-table.xml"/>
+    
+    <!-- Admin user creation -->
+    <include file="db/changelog/changeset/001-create-admin-user.xml"/>
+    
+    <!-- Add 2FA fields -->
+    <include file="db/changelog/changeset/002-add-two-factor-fields.xml"/>
+    
     <!-- Future changesets will be added here -->
 
 </databaseChangeLog>
