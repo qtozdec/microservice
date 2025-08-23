@@ -136,6 +136,9 @@ test-results/
 junit.xml
 coverage.xml
 
+# API Tests with sensitive data
+api-tests/
+unified-tests/
 # CI/CD
 .gitlab-ci-local/
 pipeline-cache/
