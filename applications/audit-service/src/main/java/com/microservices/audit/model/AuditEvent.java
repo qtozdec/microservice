@@ -68,7 +68,7 @@ public class AuditEvent {
     }
     
     public enum AuditResult {
-        SUCCESS, FAILURE, ERROR
+        SUCCESS, FAILURE, ERROR, WARNING
     }
     
     // Constructors

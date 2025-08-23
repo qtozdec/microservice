@@ -1,5 +1,42 @@
 # Claude Code Configuration
 
+## CRITICAL RULE: Always Rebuild & Redeploy After Code Changes
+
+**NEVER FORGET**: If you make ANY changes to ANY service code (INCLUDING FRONTEND), you MUST:
+
+1. **Rebuild the service**
+2. **Redeploy to Kubernetes** 
+3. **Wait for rollout to complete**
+4. **Then test**
+
+```bash
+# MANDATORY after ANY code changes to ANY services (including frontend):
+kubectl rollout restart deployment/<service-name> -n microservices
+kubectl rollout status deployment/<service-name> -n microservices --timeout=60s
+
+# For frontend specifically:
+kubectl rollout restart deployment/frontend -n microservices
+kubectl rollout status deployment/frontend -n microservices --timeout=60s
+```
+
+**FRONTEND IS ALSO A SERVICE!** Changes to React components, services, or any frontend code require rebuilding and redeploying the frontend container.
+
+## 🔐 КРИТИЧЕСКИ ВАЖНО - УПРАВЛЕНИЕ СЕКРЕТАМИ:
+
+**НИКОГДА НЕ КОММИТИТЬ АКТУАЛЬНЫЕ СЕКРЕТЫ В GIT!**
+
+1. **Использовать только script для генерации секретов**:
+   ```bash
+   ./scripts/generate-secrets.sh development
+   ./scripts/generate-secrets.sh production
+   ```
+
+2. **Актуальные секреты хранятся в** `k8s/secrets/{environment}/` (в .gitignore)
+3. **Коммитить только** `*.template` файлы
+4. **Ротация секретов** каждые 90 дней
+5. **При компрометации** - немедленная ротация всех секретов
+6. **Документация**: `docs/SECURITY-SECRETS-MANAGEMENT.md`
+
 ## Microservices Port Mapping (Kubernetes)
 
 When working with the microservices platform in Kubernetes, use these port forwards for testing:

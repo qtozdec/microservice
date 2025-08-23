@@ -4,8 +4,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { setAuthToken } from './services/api';
 import webSocketService from './services/websocket';
-import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
-import KeyboardShortcuts from './components/KeyboardShortcuts';
 import GlobalSearch from './components/GlobalSearch';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -16,7 +14,6 @@ function AppContent() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const { toggleTheme } = useTheme();
   const [showRegister, setShowRegister] = useState(false);
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
   // Set auth token when user is authenticated
@@ -53,25 +50,6 @@ function AppContent() {
     };
   }, [user?.userId, isAuthenticated]);
 
-  // Keyboard shortcuts configuration
-  const keyboardShortcuts = {
-    'ctrl+k': () => setShowGlobalSearch(true),
-    '?': () => setShowKeyboardShortcuts(true),
-    'escape': () => {
-      setShowGlobalSearch(false);
-      setShowKeyboardShortcuts(false);
-    },
-    'ctrl+/': () => toggleTheme(),
-    'ctrl+shift+l': () => {
-      if (isAuthenticated()) {
-        logout();
-      }
-    }
-  };
-
-  // Apply keyboard shortcuts only when authenticated
-  useKeyboardShortcuts(isAuthenticated() ? keyboardShortcuts : {});
-
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -105,11 +83,6 @@ function AppContent() {
       <GlobalSearch 
         isOpen={showGlobalSearch} 
         onClose={() => setShowGlobalSearch(false)} 
-      />
-      
-      <KeyboardShortcuts 
-        isOpen={showKeyboardShortcuts} 
-        onClose={() => setShowKeyboardShortcuts(false)} 
       />
       
       <Toaster 

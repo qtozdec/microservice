@@ -25,11 +25,13 @@ public class AuditService {
     public AuditEvent createAuditEvent(String service, String action, String entityType, 
                                      String entityId, String userId, Object metadata) {
         AuditEvent auditEvent = new AuditEvent();
+        auditEvent.setEventType("DATA_ACCESS"); // Default event type
         auditEvent.setServiceName(service);
         auditEvent.setAction(action);
         auditEvent.setResourceType(entityType);
         auditEvent.setResourceId(entityId);
         auditEvent.setUserId(userId);
+        auditEvent.setResult(AuditEvent.AuditResult.SUCCESS); // Default result
         
         // Convert metadata to Map<String, String>
         if (metadata != null) {
@@ -133,7 +135,10 @@ public class AuditService {
     // Security and compliance methods
     public void logSecurityEvent(String action, String entityType, String entityId, 
                                 String userId, String details) {
-        createAuditEvent("security", action, entityType, entityId, userId, details);
+        AuditEvent auditEvent = createAuditEvent("security", action, entityType, entityId, userId, details);
+        auditEvent.setEventType("SECURITY");
+        auditEvent.setDescription(details);
+        auditEventRepository.save(auditEvent);
     }
 
     public void logDataAccess(String entityType, String entityId, String userId, String action) {

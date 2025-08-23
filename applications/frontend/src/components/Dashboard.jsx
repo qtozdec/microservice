@@ -11,12 +11,13 @@ import {
   X,
   User as UserIcon,
   Search,
-  HelpCircle
+  FileText
 } from 'lucide-react';
 import UserManagement from './UserManagement';
 import OrderManagement from './OrderManagement';
 import NotificationCenter from './NotificationCenter';
 import UserProfile from './UserProfile';
+import AuditLogs from './AuditLogs';
 import ThemeToggle from './ThemeToggle';
 import GlobalSearch from './GlobalSearch';
 
@@ -25,34 +26,20 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('orders');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   const navigation = [
     { name: 'Orders', id: 'orders', icon: ShoppingCart },
     { name: 'Notifications', id: 'notifications', icon: Bell },
     { name: 'Profile', id: 'profile', icon: UserIcon },
-    ...(user?.role === 'ADMIN' ? [{ name: 'Users', id: 'users', icon: Users }] : [])
+    ...(user?.role === 'ADMIN' ? [
+      { name: 'Users', id: 'users', icon: Users },
+      { name: 'Audit Logs', id: 'audit', icon: FileText }
+    ] : [])
   ];
 
   const handleLogout = () => {
     logout();
   };
-
-  // Handle keyboard shortcuts
-  React.useEffect(() => {
-    const handleKeydown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
-      if (e.key === 'Escape' && searchOpen) {
-        setSearchOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, [searchOpen]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -64,6 +51,8 @@ const Dashboard = () => {
         return <NotificationCenter />;
       case 'profile':
         return <UserProfile />;
+      case 'audit':
+        return user?.role === 'ADMIN' ? <AuditLogs /> : <OrderManagement />;
       default:
         return <OrderManagement />;
     }
@@ -120,14 +109,6 @@ const Dashboard = () => {
                   <Search className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">Search</span>
                   <kbd className="hidden sm:inline-flex ml-2 px-1.5 py-0.5 text-xs font-mono text-gray-400 dark:text-gray-500 bg-gray-200 dark:bg-gray-600 rounded">⌘K</kbd>
-                </button>
-                
-                <button
-                  onClick={() => setShowKeyboardHelp(true)}
-                  className="p-2 text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-                  title="Keyboard shortcuts (?)"
-                >
-                  <HelpCircle className="h-4 w-4" />
                 </button>
                 
                 <ThemeToggle className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600" />

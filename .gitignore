@@ -14,7 +14,7 @@
 !.env.example
 !**/.env.example
 
-# Secrets and Keys
+# Secrets and Keys - CRITICAL: Never commit these!
 *.key
 *.pem
 *.p12
@@ -26,6 +26,25 @@ secrets/
 application-secrets.yml
 application-*.yml
 !application.yml.example
+
+# Kubernetes Secrets (actual secret files)
+k8s/secrets/development/
+k8s/secrets/staging/
+k8s/secrets/production/
+k8s/secrets/local/
+k8s/secrets/*.yaml
+!k8s/secrets/*.template
+!k8s/secrets/*.example
+
+# Environment-specific secrets
+.env.local
+.env.development
+.env.staging  
+.env.production
+**/.env.local
+**/.env.development
+**/.env.staging
+**/.env.production
 
 # IDE Files
 .idea/
