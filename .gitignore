@@ -136,9 +136,12 @@ test-results/
 junit.xml
 coverage.xml
 
-# API Tests with sensitive data
-api-tests/
-unified-tests/
+# API Tests - only ignore sensitive data, not the whole folder
+api-tests/.port-forward-pids
+api-tests/node_modules/
+unified-tests/.port-forward-pids
+unified-tests/node_modules/
+unified-tests/coverage/
 # CI/CD
 .gitlab-ci-local/
 pipeline-cache/
