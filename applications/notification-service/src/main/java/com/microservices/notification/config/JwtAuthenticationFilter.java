@@ -30,7 +30,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         
         String requestPath = request.getServletPath();
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
         
+        // Skip authentication for health and actuator endpoints
         if (requestPath.startsWith("/health") || 
             requestPath.startsWith("/actuator/")) {
             filterChain.doFilter(request, response);
@@ -54,6 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (jwtService.isTokenValid(jwt)) {
+                    // Create authentication token with role
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + userRole);
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userEmail,

@@ -1,4 +1,4 @@
-package com.microservices.user.audit;
+package com.microservices.order.audit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

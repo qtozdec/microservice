@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
@@ -26,6 +26,34 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('orders');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Handle URL hash navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash === '#/audit-logs') {
+        setActiveTab('audit');
+      } else if (hash === '#/notifications') {
+        setActiveTab('notifications');
+      } else if (hash === '#/users') {
+        setActiveTab('users');
+      } else if (hash === '#/profile') {
+        setActiveTab('profile');
+      } else if (hash === '#/dashboard') {
+        setActiveTab('orders');
+      }
+    };
+
+    // Handle initial hash
+    handleHashChange();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
   const navigation = [
     { name: 'Orders', id: 'orders', icon: ShoppingCart },

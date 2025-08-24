@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-update-column-lengths" author="system">
+        <comment>Update column lengths for description, user_agent, and error_message fields</comment>
+        
+        <modifyDataType tableName="audit_events" columnName="description" newDataType="VARCHAR(1000)"/>
+        <modifyDataType tableName="audit_events" columnName="user_agent" newDataType="VARCHAR(1000)"/>
+        <modifyDataType tableName="audit_events" columnName="error_message" newDataType="VARCHAR(2000)"/>
+        
+        <rollback>
+            <modifyDataType tableName="audit_events" columnName="description" newDataType="VARCHAR(255)"/>
+            <modifyDataType tableName="audit_events" columnName="user_agent" newDataType="VARCHAR(255)"/>
+            <modifyDataType tableName="audit_events" columnName="error_message" newDataType="VARCHAR(255)"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

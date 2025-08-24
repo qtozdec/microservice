@@ -18,14 +18,14 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/audit")
+@RequestMapping({"/audit", "/audit-logs"})
 @CrossOrigin(origins = "*")
 public class AuditController {
 
     @Autowired
     private AuditService auditService;
 
-    @GetMapping
+    @GetMapping("/events")
     public ResponseEntity<Page<AuditEvent>> getAuditEvents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -121,49 +121,10 @@ public class AuditController {
         return ResponseEntity.ok("Compliance event logged successfully");
     }
 
-    @PostMapping("/events")
+    @PostMapping({"/events", ""})
     public ResponseEntity<AuditEvent> createAuditEvent(@RequestBody AuditEventRequest request) {
         try {
-            AuditEvent auditEvent = new AuditEvent();
-            auditEvent.setEventType(request.getEventType());
-            auditEvent.setServiceName(request.getServiceName());
-            auditEvent.setUserId(request.getUserId());
-            auditEvent.setSessionId(request.getSessionId());
-            auditEvent.setResourceType(request.getResourceType());
-            auditEvent.setResourceId(request.getResourceId());
-            auditEvent.setAction(request.getAction());
-            auditEvent.setDescription(request.getDescription());
-            auditEvent.setIpAddress(request.getIpAddress());
-            auditEvent.setUserAgent(request.getUserAgent());
-            
-            // Parse result enum
-            if (request.getResult() != null) {
-                try {
-                    auditEvent.setResult(AuditEvent.AuditResult.valueOf(request.getResult()));
-                } catch (IllegalArgumentException e) {
-                    auditEvent.setResult(AuditEvent.AuditResult.SUCCESS);
-                }
-            } else {
-                auditEvent.setResult(AuditEvent.AuditResult.SUCCESS);
-            }
-            
-            auditEvent.setErrorMessage(request.getErrorMessage());
-            auditEvent.setMetadata(request.getMetadata());
-            auditEvent.setDurationMs(request.getDurationMs());
-            
-            if (request.getTimestamp() != null) {
-                auditEvent.setTimestamp(request.getTimestamp());
-            }
-            
-            AuditEvent savedEvent = auditService.createAuditEvent(
-                request.getServiceName(),
-                request.getAction(),
-                request.getResourceType(),
-                request.getResourceId(),
-                request.getUserId(),
-                request.getMetadata()
-            );
-            
+            AuditEvent savedEvent = auditService.createAuditEventFromRequest(request);
             return ResponseEntity.ok(savedEvent);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);

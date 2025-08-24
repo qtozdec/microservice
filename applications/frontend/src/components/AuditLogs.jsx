@@ -205,7 +205,18 @@ const AuditLogs = () => {
   };
 
   const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
+    if (!timestamp) return 'N/A';
+    
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleString();
+    } catch (error) {
+      console.error('Error formatting timestamp:', timestamp, error);
+      return 'Invalid Date';
+    }
   };
 
   const getResultBadge = (result) => {
@@ -268,9 +279,9 @@ const AuditLogs = () => {
     {
       key: 'description',
       label: 'Description',
-      render: (item) => (
-        <div className="max-w-xs truncate" title={item.description}>
-          {item.description}
+      render: (value, item) => (
+        <div className="max-w-xs truncate" title={value || 'N/A'}>
+          {value || 'N/A'}
         </div>
       ),
       sortable: false

@@ -181,4 +181,44 @@ public class AuditService {
         // In a real implementation, this would extract from the current request
         return "Microservice";
     }
+
+    public AuditEvent createAuditEventFromRequest(com.microservices.audit.dto.AuditEventRequest request) {
+        AuditEvent auditEvent = new AuditEvent();
+        
+        // Set all fields from request
+        auditEvent.setEventType(request.getEventType());
+        auditEvent.setServiceName(request.getServiceName());
+        auditEvent.setUserId(request.getUserId());
+        auditEvent.setSessionId(request.getSessionId());
+        auditEvent.setResourceType(request.getResourceType());
+        auditEvent.setResourceId(request.getResourceId());
+        auditEvent.setAction(request.getAction());
+        auditEvent.setDescription(request.getDescription());
+        auditEvent.setIpAddress(request.getIpAddress() != null ? request.getIpAddress() : getCurrentIpAddress());
+        auditEvent.setUserAgent(request.getUserAgent() != null ? request.getUserAgent() : getCurrentUserAgent());
+        
+        // Parse result enum
+        if (request.getResult() != null) {
+            try {
+                auditEvent.setResult(AuditEvent.AuditResult.valueOf(request.getResult()));
+            } catch (IllegalArgumentException e) {
+                auditEvent.setResult(AuditEvent.AuditResult.SUCCESS);
+            }
+        } else {
+            auditEvent.setResult(AuditEvent.AuditResult.SUCCESS);
+        }
+        
+        auditEvent.setErrorMessage(request.getErrorMessage());
+        auditEvent.setMetadata(request.getMetadata());
+        auditEvent.setDurationMs(request.getDurationMs());
+        
+        // Set timestamp - use from request or current time
+        if (request.getTimestamp() != null) {
+            auditEvent.setTimestamp(request.getTimestamp());
+        } else {
+            auditEvent.setTimestamp(LocalDateTime.now());
+        }
+        
+        return auditEventRepository.save(auditEvent);
+    }
 }
