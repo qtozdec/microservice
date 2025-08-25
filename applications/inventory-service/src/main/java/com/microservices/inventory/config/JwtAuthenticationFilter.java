@@ -1,6 +1,7 @@
 package com.microservices.inventory.config;
 
 import com.microservices.inventory.service.JwtService;
+import com.microservices.inventory.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,19 +9,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     @Autowired
     private JwtService jwtService;
+    
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
     
     @Override
     protected void doFilterInternal(
@@ -43,33 +47,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;
-        final String userRole;
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            filterChain.doFilter(request, response);
             return;
         }
         
-        try {
-            jwt = authHeader.substring(7);
-            userEmail = jwtService.extractEmail(jwt);
-            userRole = jwtService.extractRole(jwt);
+        jwt = authHeader.substring(7);
+        userEmail = jwtService.extractEmail(jwt);
+        
+        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            String userRole = jwtService.extractRole(jwt);
+            UserDetails userDetails = userDetailsService.createUserDetailsWithRole(userEmail, userRole);
             
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                if (jwtService.isTokenValid(jwt)) {
-                    // Create authentication token with role
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + userRole);
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userEmail,
-                        null,
-                        Collections.singletonList(authority)
-                    );
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+            if (jwtService.isTokenValid(jwt, userEmail)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
+                );
+                authToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
         }
         
         filterChain.doFilter(request, response);

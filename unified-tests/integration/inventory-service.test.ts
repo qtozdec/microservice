@@ -4,11 +4,21 @@ const config = (global as any).testConfig;
 
 describe('Inventory Service Integration Tests', () => {
   let testProductId: string;
+  let authToken: string;
 
   beforeAll(async () => {
     // Health check
     const healthResponse = await axios.get(`${config.endpoints.inventoryService}/health`);
     expect(healthResponse.status).toBe(200);
+
+    // Get auth token
+    const loginResponse = await axios.post(`${config.endpoints.userService}/auth/login`, {
+      email: config.testUser.email,
+      password: config.testUser.password
+    });
+    authToken = loginResponse.data.token;
+
+    // Token will be passed individually in each request
   });
 
   describe('Product Management', () => {
@@ -22,7 +32,9 @@ describe('Inventory Service Integration Tests', () => {
         sku: `TEST-${Date.now()}`
       };
 
-      const response = await axios.post(`${config.endpoints.inventoryService}/products`, productData);
+      const response = await axios.post(`${config.endpoints.inventoryService}/products`, productData, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(201);
       expect(response.data).toHaveProperty('id');
@@ -34,7 +46,9 @@ describe('Inventory Service Integration Tests', () => {
     });
 
     test('should get all products', async () => {
-      const response = await axios.get(`${config.endpoints.inventoryService}/products`);
+      const response = await axios.get(`${config.endpoints.inventoryService}/products`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBe(true);
@@ -42,7 +56,9 @@ describe('Inventory Service Integration Tests', () => {
     });
 
     test('should get product by id', async () => {
-      const response = await axios.get(`${config.endpoints.inventoryService}/products/${testProductId}`);
+      const response = await axios.get(`${config.endpoints.inventoryService}/products/${testProductId}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(200);
       expect(response.data.id).toBe(testProductId);
@@ -58,7 +74,9 @@ describe('Inventory Service Integration Tests', () => {
         quantity: 150
       };
 
-      const response = await axios.put(`${config.endpoints.inventoryService}/products/${testProductId}`, updateData);
+      const response = await axios.put(`${config.endpoints.inventoryService}/products/${testProductId}`, updateData, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(200);
       expect(response.data.name).toBe(updateData.name);
@@ -67,7 +85,9 @@ describe('Inventory Service Integration Tests', () => {
     });
 
     test('should get products by category', async () => {
-      const response = await axios.get(`${config.endpoints.inventoryService}/products/category/Electronics`);
+      const response = await axios.get(`${config.endpoints.inventoryService}/products/category/Electronics`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBe(true);
@@ -75,7 +95,9 @@ describe('Inventory Service Integration Tests', () => {
     });
 
     test('should get low stock products', async () => {
-      const response = await axios.get(`${config.endpoints.inventoryService}/products/low-stock?threshold=50`);
+      const response = await axios.get(`${config.endpoints.inventoryService}/products/low-stock?threshold=50`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBe(true);
@@ -96,7 +118,9 @@ describe('Inventory Service Integration Tests', () => {
         sku: `STOCK-TEST-${Date.now()}`
       };
 
-      const response = await axios.post(`${config.endpoints.inventoryService}/products`, productData);
+      const response = await axios.post(`${config.endpoints.inventoryService}/products`, productData, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
       testSku = response.data.sku;
     });
 
@@ -104,6 +128,8 @@ describe('Inventory Service Integration Tests', () => {
       const response = await axios.post(`${config.endpoints.inventoryService}/stock/reserve`, {
         sku: testSku,
         quantity: 10
+      }, {
+        headers: { Authorization: `Bearer ${authToken}` }
       });
 
       expect(response.status).toBe(200);
@@ -115,12 +141,16 @@ describe('Inventory Service Integration Tests', () => {
       await axios.post(`${config.endpoints.inventoryService}/stock/reserve`, {
         sku: testSku,
         quantity: 20
+      }, {
+        headers: { Authorization: `Bearer ${authToken}` }
       });
 
       // Then restore it
       const response = await axios.post(`${config.endpoints.inventoryService}/stock/restore`, {
         sku: testSku,
         quantity: 10
+      }, {
+        headers: { Authorization: `Bearer ${authToken}` }
       });
 
       expect(response.status).toBe(200);
@@ -132,6 +162,8 @@ describe('Inventory Service Integration Tests', () => {
         await axios.post(`${config.endpoints.inventoryService}/stock/reserve`, {
           sku: testSku,
           quantity: 200 // More than available
+        }, {
+          headers: { Authorization: `Bearer ${authToken}` }
         });
         fail('Should have thrown an error');
       } catch (error: any) {
@@ -143,7 +175,9 @@ describe('Inventory Service Integration Tests', () => {
 
   describe('Product Search and Filtering', () => {
     test('should search products by name', async () => {
-      const response = await axios.get(`${config.endpoints.inventoryService}/products/search?name=Test`);
+      const response = await axios.get(`${config.endpoints.inventoryService}/products/search?name=Test`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBe(true);
@@ -153,7 +187,9 @@ describe('Inventory Service Integration Tests', () => {
     });
 
     test('should get in-stock products', async () => {
-      const response = await axios.get(`${config.endpoints.inventoryService}/products/in-stock`);
+      const response = await axios.get(`${config.endpoints.inventoryService}/products/in-stock`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBe(true);
@@ -161,7 +197,9 @@ describe('Inventory Service Integration Tests', () => {
     });
 
     test('should get out-of-stock products', async () => {
-      const response = await axios.get(`${config.endpoints.inventoryService}/products/out-of-stock`);
+      const response = await axios.get(`${config.endpoints.inventoryService}/products/out-of-stock`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBe(true);

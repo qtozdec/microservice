@@ -273,4 +273,20 @@ public class InventoryService {
         
         return stats;
     }
+    
+    // Additional methods required by integration tests
+    public List<Product> searchProductsByName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return productRepository.findAll();
+        }
+        return productRepository.findByNameContainingIgnoreCase(name.trim());
+    }
+    
+    public List<Product> getInStockProducts() {
+        return productRepository.findByQuantityGreaterThan(0);
+    }
+    
+    public List<Product> getOutOfStockProducts() {
+        return productRepository.findByQuantity(0);
+    }
 }

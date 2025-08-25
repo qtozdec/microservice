@@ -9,21 +9,21 @@ global.testConfig = {
   timeout: 30000,
   maxRetries: 10,
   endpoints: {
-    userService: process.env.USER_SERVICE_URL || 'http://localhost:8081',
-    orderService: process.env.ORDER_SERVICE_URL || 'http://localhost:8082',
-    inventoryService: process.env.INVENTORY_SERVICE_URL || 'http://localhost:8084',
-    notificationService: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:8083',
-    auditService: process.env.AUDIT_SERVICE_URL || 'http://localhost:8085'
+    userService: process.env.USER_SERVICE_URL || 'http://localhost:30081',
+    orderService: process.env.ORDER_SERVICE_URL || 'http://localhost:30082',
+    inventoryService: process.env.INVENTORY_SERVICE_URL || 'http://localhost:30084',
+    notificationService: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:30083',
+    auditService: process.env.AUDIT_SERVICE_URL || 'http://localhost:30085'
   },
   testUser: {
-    username: 'user@example.com',
-    email: 'user@example.com',
-    password: 'user123'
+    username: process.env.TEST_USER_EMAIL || 'test@example.com',
+    email: process.env.TEST_USER_EMAIL || 'test@example.com',
+    password: process.env.TEST_USER_PASSWORD || 'testPassword123'
   },
   adminUser: {
-    username: 'admin@example.com',
-    email: 'admin@example.com',
-    password: 'admin123'
+    username: process.env.ADMIN_USER_EMAIL || 'admin@example.com',
+    email: process.env.ADMIN_USER_EMAIL || 'admin@example.com',
+    password: process.env.ADMIN_USER_PASSWORD || 'adminPassword123'
   },
   database: {
     host: process.env.DB_HOST || 'localhost',
@@ -63,12 +63,32 @@ global.testUtils = {
   cleanup: async () => {
     // Cleanup logic for tests
     console.log('Test cleanup completed');
+  },
+  
+  setupTestUser: async () => {
+    const axios = require('axios');
+    
+    try {
+      // Try to register the test user (it's okay if it already exists)
+      await axios.post(`${global.testConfig.endpoints.userService}/auth/register`, {
+        email: global.testConfig.testUser.email,
+        password: global.testConfig.testUser.password,
+        name: 'Test User'
+      });
+    } catch (error) {
+      // User might already exist, which is fine
+      if (error.response?.status !== 400) {
+        console.warn('Could not setup test user:', error.message);
+      }
+    }
   }
 };
 
 // Global setup
 beforeAll(async () => {
   jest.setTimeout(global.testConfig.timeout);
+  // Setup test user before running any tests
+  await global.testUtils.setupTestUser();
 });
 
 // Global cleanup

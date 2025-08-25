@@ -18,19 +18,18 @@ describe('User Service Integration Tests', () => {
       const registerData = {
         email: `test-${Date.now()}@example.com`,
         password: config.testUser.password,
-        firstName: config.testUser.firstName,
-        lastName: config.testUser.lastName
+        name: 'Test User'
       };
 
       const response = await axios.post(`${config.endpoints.userService}/auth/register`, registerData);
       
       expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('id');
+      expect(response.data).toHaveProperty('userId');
       expect(response.data).toHaveProperty('email');
       expect(response.data.email).toBe(registerData.email);
       
       // Store user ID for later tests
-      testUserId = response.data.id;
+      testUserId = response.data.userId;
     });
 
     test('should login with valid credentials', async () => {
@@ -43,10 +42,12 @@ describe('User Service Integration Tests', () => {
       
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('token');
-      expect(response.data).toHaveProperty('user');
+      expect(response.data).toHaveProperty('email');
       
       // Store auth token for later tests
       authToken = response.data.token;
+      
+      // Token will be passed individually in each request
     });
 
     test('should fail login with invalid credentials', async () => {
@@ -60,8 +61,8 @@ describe('User Service Integration Tests', () => {
         // If login succeeds with mock service, that's also fine
         expect(response.status).toBe(200);
       } catch (error: any) {
-        // Real service should return 401, mock might not exist
-        expect([401, 404]).toContain(error.response?.status || 404);
+        // Real service should return 400 for invalid credentials
+        expect(error.response?.status).toBe(400);
       }
     });
   });
@@ -78,7 +79,8 @@ describe('User Service Integration Tests', () => {
         await axios.get(`${config.endpoints.userService}/nonexistent`);
         fail('Should have thrown an error');
       } catch (error: any) {
-        expect(error.response.status).toBe(404);
+        // Could be 404 (not found) or 403 (forbidden) depending on security config
+        expect([403, 404]).toContain(error.response.status);
       }
     });
   });

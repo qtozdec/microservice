@@ -159,4 +159,40 @@ public class InventoryController {
         Map<String, Object> stats = inventoryService.getInventoryStatistics();
         return ResponseEntity.ok(stats);
     }
+
+    // Stock management endpoints expected by integration tests
+    @PostMapping("/stock/reserve")
+    public ResponseEntity<Product> reserveStock(@RequestBody Map<String, Object> request) {
+        String sku = (String) request.get("sku");
+        Integer quantity = (Integer) request.get("quantity");
+        Product product = inventoryService.reserveStock(sku, quantity);
+        return ResponseEntity.ok(product);
+    }
+
+    @PostMapping("/stock/restore")
+    public ResponseEntity<Product> restoreStock(@RequestBody Map<String, Object> request) {
+        String sku = (String) request.get("sku");
+        Integer quantity = (Integer) request.get("quantity");
+        Product product = inventoryService.restoreStock(sku, quantity);
+        return ResponseEntity.ok(product);
+    }
+
+    // Additional endpoints for searching and filtering  
+    @GetMapping("/products/search")
+    public ResponseEntity<List<Product>> searchProducts(@RequestParam(required = false) String name) {
+        List<Product> products = inventoryService.searchProductsByName(name);
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/products/in-stock")
+    public ResponseEntity<List<Product>> getInStockProducts() {
+        List<Product> products = inventoryService.getInStockProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/products/out-of-stock")
+    public ResponseEntity<List<Product>> getOutOfStockProducts() {
+        List<Product> products = inventoryService.getOutOfStockProducts();
+        return ResponseEntity.ok(products);
+    }
 }
