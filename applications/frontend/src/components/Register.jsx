@@ -21,20 +21,16 @@ const Register = ({ onToggleView }) => {
     setError('');
 
     try {
-      console.log('Register: Attempting registration with:', formData.email);
       const response = await authService.register(formData);
-      console.log('Register: API response:', response.data);
 
       if (response.data && response.data.token) {
         const { token, refreshToken, ...userData } = response.data;
         
-        console.log('Register: Setting auth token and user data');
         setAuthToken(token);
         if (refreshToken) {
           localStorage.setItem('refreshToken', refreshToken);
         }
         login(userData, token);
-        console.log('Register: Registration and login completed successfully');
       } else {
         throw new Error('Invalid response format');
       }

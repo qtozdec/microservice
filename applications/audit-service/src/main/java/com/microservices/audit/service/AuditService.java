@@ -163,13 +163,50 @@ public class AuditService {
 
     // Helper methods
     private String extractEntityId(Object event) {
-        // Implementation would depend on the event structure
-        return "unknown";
+        try {
+            String eventStr = event.toString();
+            
+            // Parse ConsumerRecord value for order events
+            if (eventStr.contains("Order status updated:") || eventStr.contains("Order")) {
+                // Extract order ID from patterns like "Order status updated: 10 - CANCELLED"
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("Order.*?(\\d+)");
+                java.util.regex.Matcher matcher = pattern.matcher(eventStr);
+                if (matcher.find()) {
+                    String orderId = matcher.group(1);
+                    return orderId;
+                }
+            }
+            
+            // Parse other event types if needed
+            return "unknown";
+        } catch (Exception e) {
+            return "unknown";
+        }
     }
 
     private String extractUserId(Object event) {
-        // Implementation would depend on the event structure
-        return "unknown";
+        try {
+            String eventStr = event.toString();
+            
+            // For now, use system as user since Kafka events don't contain user info
+            // In a real system, events would include user context
+            if (eventStr.contains("Order") || eventStr.contains("status updated")) {
+                // These are system-generated events, so user is "system"
+                return "system";
+            }
+            
+            // Look for user ID patterns in the event if they exist
+            java.util.regex.Pattern userPattern = java.util.regex.Pattern.compile("user[Ii]d[:\\s=]+(\\d+)");
+            java.util.regex.Matcher userMatcher = userPattern.matcher(eventStr);
+            if (userMatcher.find()) {
+                String userId = userMatcher.group(1);
+                return userId;
+            }
+            
+            return "system";
+        } catch (Exception e) {
+            return "system";
+        }
     }
 
     private String getCurrentIpAddress() {

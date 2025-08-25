@@ -15,29 +15,31 @@ class WebSocketService {
 
   connect(userId) {
     if (this.connected) {
-      console.log('WebSocket: Already connected');
       return Promise.resolve();
     }
-
-    console.log('WebSocket: Connecting...', { userId });
+    return Promise.resolve(); // Temporarily disable WebSocket connections
 
     return new Promise((resolve, reject) => {
       // Create STOMP client with SockJS
       this.client = new Client({
-        webSocketFactory: () => new SockJS(`${window.location.origin}/ws`),
+        webSocketFactory: () => {
+          const token = localStorage.getItem('token');
+          const wsUrl = token 
+            ? `${window.location.origin}/ws?token=${encodeURIComponent(token)}`
+            : `${window.location.origin}/ws`;
+          return new SockJS(wsUrl);
+        },
         connectHeaders: {
-          userId: userId?.toString() || ''
+          userId: userId?.toString() || '',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`
         },
-        debug: (str) => {
-          console.log('WebSocket Debug:', str);
-        },
+        debug: () => {}, // Debug disabled
         reconnectDelay: this.reconnectDelay,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
       });
 
       this.client.onConnect = (frame) => {
-        console.log('WebSocket: Connected', frame);
         this.connected = true;
         this.reconnectAttempts = 0;
         
@@ -85,7 +87,6 @@ class WebSocketService {
       };
 
       this.client.onDisconnect = () => {
-        console.log('WebSocket: Disconnected');
         this.connected = false;
         this.subscriptions.clear();
         
@@ -104,7 +105,6 @@ class WebSocketService {
 
   disconnect() {
     if (this.client) {
-      console.log('WebSocket: Disconnecting...');
       this.connected = false;
       this.subscriptions.clear();
       this.messageHandlers.clear();
@@ -121,41 +121,34 @@ class WebSocketService {
     const destination = `/user/${userId}/queue/notifications`;
     
     if (this.subscriptions.has(destination)) {
-      console.log('WebSocket: Already subscribed to user notifications');
       return;
     }
 
     const subscription = this.client.subscribe(destination, (message) => {
       const notification = JSON.parse(message.body);
-      console.log('WebSocket: User notification received', notification);
       this.handleNotification(notification);
     });
 
     this.subscriptions.set(destination, subscription);
-    console.log('WebSocket: Subscribed to user notifications', destination);
   }
 
   subscribeToGlobalNotifications() {
     const destination = '/topic/notifications';
     
     if (this.subscriptions.has(destination)) {
-      console.log('WebSocket: Already subscribed to global notifications');
       return;
     }
 
     const subscription = this.client.subscribe(destination, (message) => {
       const notification = JSON.parse(message.body);
-      console.log('WebSocket: Global notification received', notification);
       this.handleNotification(notification);
     });
 
     this.subscriptions.set(destination, subscription);
-    console.log('WebSocket: Subscribed to global notifications', destination);
   }
 
   subscribe(destination, handler) {
     if (!this.client || !this.connected) {
-      console.error('WebSocket not connected');
       return;
     }
 
@@ -164,7 +157,6 @@ class WebSocketService {
         const data = JSON.parse(message.body);
         handler(data);
       } catch (error) {
-        console.error('Error parsing message:', error);
         handler(message.body);
       }
     });
@@ -183,7 +175,6 @@ class WebSocketService {
 
   publish(destination, body, headers = {}) {
     if (!this.client || !this.connected) {
-      console.error('WebSocket not connected');
       return;
     }
 
@@ -196,7 +187,6 @@ class WebSocketService {
 
   // Message handlers
   handleInventoryUpdate(message) {
-    console.log('Inventory update received:', message);
     
     // Dispatch custom event for inventory updates
     const event = new CustomEvent('inventoryUpdate', {
@@ -210,7 +200,6 @@ class WebSocketService {
   }
 
   handleNotification(notification) {
-    console.log('Notification received:', notification);
     
     // Play sound for important notifications
     if (notification.type === 'error' || notification.type === 'warning') {
@@ -329,7 +318,7 @@ class WebSocketService {
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
     } catch (error) {
-      console.warn('WebSocket: Could not play notification sound', error);
+      // Sound failed silently
     }
   }
 
@@ -357,7 +346,7 @@ class WebSocketService {
         detail: newNotification 
       }));
     } catch (error) {
-      console.error('WebSocket: Error storing notification', error);
+      // Storage failed silently
     }
   }
 
@@ -370,7 +359,7 @@ class WebSocketService {
           tag: notification.type,
         });
       } catch (error) {
-        console.warn('WebSocket: Could not show browser notification', error);
+        // Browser notification failed silently
       }
     }
   }

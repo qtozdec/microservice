@@ -27,9 +27,8 @@ function AppContent() {
   // Connect to WebSocket when user is authenticated
   useEffect(() => {
     if (user?.userId && isAuthenticated()) {
-      console.log('App: Connecting to WebSocket for user:', user.userId);
       webSocketService.connect(user.userId).catch(error => {
-        console.error('App: WebSocket connection failed:', error);
+        // WebSocket connection failed
       });
 
       // Request notification permission
@@ -37,7 +36,7 @@ function AppContent() {
     } else if (!isAuthenticated()) {
       // Disconnect WebSocket when user logs out
       if (webSocketService.isConnected()) {
-        console.log('App: Disconnecting WebSocket');
+        // Disconnecting WebSocket
         webSocketService.disconnect();
       }
     }

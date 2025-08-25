@@ -36,11 +36,9 @@ public class AuditInterceptor implements HandlerInterceptor, ApplicationContextA
     private AuditLogger getAuditLogger() {
         if (auditLogger == null && applicationContext != null) {
             try {
-                System.out.println("DEBUG: Trying to get AuditLogger bean from ApplicationContext");
                 auditLogger = applicationContext.getBean(AuditLogger.class);
-                System.out.println("DEBUG: Successfully got AuditLogger bean");
             } catch (Exception e) {
-                System.out.println("DEBUG: Failed to get AuditLogger bean: " + e.getMessage());
+                // AuditLogger bean not available
             }
         }
         return auditLogger;
@@ -52,16 +50,12 @@ public class AuditInterceptor implements HandlerInterceptor, ApplicationContextA
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         startTime.set(System.currentTimeMillis());
         
-        System.out.println("DEBUG: AuditInterceptor.preHandle called for URI: " + request.getRequestURI());
-        
         // Skip audit for health checks and actuator endpoints
         if (shouldSkipAudit(request.getRequestURI())) {
-            System.out.println("DEBUG: Skipping audit for URI: " + request.getRequestURI());
             return true;
         }
 
         // Log the start of the request
-        System.out.println("DEBUG: Logging request start for URI: " + request.getRequestURI());
         logRequestStart(request, handler);
         
         return true;
@@ -87,8 +81,7 @@ public class AuditInterceptor implements HandlerInterceptor, ApplicationContextA
         String action = getActionFromRequest(request, handler);
         String resourceType = getResourceTypeFromRequest(request);
         String resourceId = getResourceIdFromRequest(request);
-        
-        System.out.println("DEBUG: logRequestStart - userId=" + userId + ", action=" + action + ", resourceType=" + resourceType);
+        String jwtToken = extractJwtToken(request);
         
         Map<String, String> metadata = new HashMap<>();
         metadata.put("method", request.getMethod());
@@ -98,10 +91,8 @@ public class AuditInterceptor implements HandlerInterceptor, ApplicationContextA
         metadata.put("referer", request.getHeader("Referer"));
         
         AuditLogger auditLogger = getAuditLogger();
-        System.out.println("DEBUG: AuditLogger is " + (auditLogger != null ? "available" : "null"));
         
         if (auditLogger != null) {
-            System.out.println("DEBUG: Calling auditLogger.logEvent");
             auditLogger.logEvent(
                 "REQUEST_START",
                 "order-service",
@@ -115,11 +106,9 @@ public class AuditInterceptor implements HandlerInterceptor, ApplicationContextA
                 "Request initiated",
                 metadata,
                 AuditResult.SUCCESS,
-                null
+                null,
+                jwtToken
             );
-            System.out.println("DEBUG: auditLogger.logEvent completed");
-        } else {
-            System.out.println("DEBUG: AuditLogger is null, cannot log event");
         }
     }
 
@@ -130,6 +119,7 @@ public class AuditInterceptor implements HandlerInterceptor, ApplicationContextA
         String action = getActionFromRequest(request, handler);
         String resourceType = getResourceTypeFromRequest(request);
         String resourceId = getResourceIdFromRequest(request);
+        String jwtToken = extractJwtToken(request);
         
         Map<String, String> metadata = new HashMap<>();
         metadata.put("method", request.getMethod());
@@ -165,7 +155,8 @@ public class AuditInterceptor implements HandlerInterceptor, ApplicationContextA
                 "Request completed",
                 metadata,
                 result,
-                errorMessage
+                errorMessage,
+                jwtToken
             );
         }
     }
@@ -250,6 +241,14 @@ public class AuditInterceptor implements HandlerInterceptor, ApplicationContextA
         }
         
         return "unknown";
+    }
+
+    private String extractJwtToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
     }
 
     public enum AuditResult {

@@ -20,20 +20,15 @@ public class AuditConfig implements WebMvcConfigurer {
 
     @Bean
     public AuditInterceptor auditInterceptor() {
-        System.out.println("DEBUG: Creating AuditInterceptor bean");
         AuditInterceptor interceptor = new AuditInterceptor();
-        System.out.println("DEBUG: Setting AuditLogger: " + (auditLogger != null ? "available" : "null"));
         interceptor.setAuditLogger(auditLogger);
-        System.out.println("DEBUG: AuditInterceptor bean created successfully");
         return interceptor;
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        System.out.println("DEBUG: Adding audit interceptor to registry");
         registry.addInterceptor(auditInterceptor())
                 .addPathPatterns("/products/**", "/inventory/**", "/api/products/**", "/api/inventory/**")
                 .excludePathPatterns("/health/**", "/actuator/**", "/swagger/**", "/v3/api-docs/**");
-        System.out.println("DEBUG: Audit interceptor added to registry for paths: /products/**, /inventory/**, /api/products/**, /api/inventory/**");
     }
 }

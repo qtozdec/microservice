@@ -140,13 +140,6 @@ const Dashboard = () => {
                 </button>
                 
                 <ThemeToggle className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600" />
-                <div className="h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                  <UserIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{user?.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role}</p>
-                </div>
                 <button
                   onClick={handleLogout}
                   className="ml-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"

@@ -60,7 +60,7 @@ const GlobalSearch = ({ isOpen, onClose }) => {
         setRecentSearches(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Error loading recent searches:', error);
+      // Error loading recent searches
     }
   };
 
@@ -74,20 +74,18 @@ const GlobalSearch = ({ isOpen, onClose }) => {
       setRecentSearches(updated);
       localStorage.setItem('recentSearches', JSON.stringify(updated));
     } catch (error) {
-      console.error('Error saving recent search:', error);
+      // Error saving recent search
     }
   };
 
   const performSearch = async (searchQuery) => {
     if (!searchQuery.trim()) return;
-
     setLoading(true);
     try {
       const searchResults = await searchService.globalSearch(searchQuery);
       setResults(searchResults);
       saveRecentSearch(searchQuery);
     } catch (error) {
-      console.error('Search error:', error);
       setResults({ users: [], orders: [], notifications: [] });
     } finally {
       setLoading(false);
@@ -105,14 +103,14 @@ const GlobalSearch = ({ isOpen, onClose }) => {
   };
 
   const getTotalResults = () => {
-    return results.users.length + results.orders.length + results.notifications.length;
+    return (results?.users?.length || 0) + (results?.orders?.length || 0) + (results?.notifications?.length || 0);
   };
 
   const getTabResults = (tab) => {
     switch (tab) {
-      case 'users': return results.users.length;
-      case 'orders': return results.orders.length;
-      case 'notifications': return results.notifications.length;
+      case 'users': return results?.users?.length || 0;
+      case 'orders': return results?.orders?.length || 0;
+      case 'notifications': return results?.notifications?.length || 0;
       default: return getTotalResults();
     }
   };
@@ -225,7 +223,7 @@ const GlobalSearch = ({ isOpen, onClose }) => {
   );
 
   const renderResults = () => {
-    const { users, orders, notifications } = results;
+    const { users = [], orders = [], notifications = [] } = results;
     
     if (loading) {
       return (

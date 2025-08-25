@@ -29,6 +29,15 @@ public class AuditLogger {
                         String sessionId, String ipAddress, String userAgent, 
                         String description, Map<String, String> metadata, 
                         AuditInterceptor.AuditResult result, String errorMessage) {
+        logEvent(eventType, serviceName, action, resourceType, resourceId, userId,
+                sessionId, ipAddress, userAgent, description, metadata, result, errorMessage, null);
+    }
+
+    public void logEvent(String eventType, String serviceName, String action, 
+                        String resourceType, String resourceId, String userId, 
+                        String sessionId, String ipAddress, String userAgent, 
+                        String description, Map<String, String> metadata, 
+                        AuditInterceptor.AuditResult result, String errorMessage, String jwtToken) {
         
         if (!auditEnabled) {
             return;
@@ -39,7 +48,7 @@ public class AuditLogger {
             try {
                 sendAuditEvent(eventType, serviceName, action, resourceType, resourceId, 
                               userId, sessionId, ipAddress, userAgent, description, 
-                              metadata, result, errorMessage);
+                              metadata, result, errorMessage, jwtToken);
             } catch (Exception e) {
                 System.err.println("Failed to send audit event: " + e.getMessage());
                 // Could implement fallback logging to local file system here
@@ -51,7 +60,7 @@ public class AuditLogger {
                                String resourceType, String resourceId, String userId, 
                                String sessionId, String ipAddress, String userAgent, 
                                String description, Map<String, String> metadata, 
-                               AuditInterceptor.AuditResult result, String errorMessage) {
+                               AuditInterceptor.AuditResult result, String errorMessage, String jwtToken) {
         
         AuditEventDto auditEvent = new AuditEventDto();
         auditEvent.setEventType(eventType);
@@ -71,6 +80,11 @@ public class AuditLogger {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        // Add JWT authentication if provided
+        if (jwtToken != null && !jwtToken.isEmpty()) {
+            headers.setBearerAuth(jwtToken);
+        }
 
         HttpEntity<AuditEventDto> request = new HttpEntity<>(auditEvent, headers);
 

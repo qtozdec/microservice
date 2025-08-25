@@ -37,9 +37,6 @@ const NotificationCenter = () => {
       
       // Always fetch all notifications
       const response = await notificationService.getNotificationsByUserId(user.userId);
-      console.log('Fetched notifications:', response.data);
-      console.log('Sample notification structure:', response.data[0]);
-      console.log('Unread notifications:', response.data.filter(n => !n.read && !n.isRead));
       setNotifications(response.data);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -51,9 +48,7 @@ const NotificationCenter = () => {
 
   const markAsRead = async (notificationId) => {
     try {
-      console.log('Marking notification as read:', notificationId);
       const response = await notificationService.markAsRead(notificationId);
-      console.log('Mark as read response:', response);
       
       // Optimistically update local state
       setNotifications(prevNotifications => 

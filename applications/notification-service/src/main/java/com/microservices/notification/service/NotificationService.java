@@ -40,7 +40,6 @@ public class NotificationService {
     
     @KafkaListener(topics = "user-events", groupId = "notification-service-group")
     public void handleUserEvents(String message) {
-        System.out.println("Processing user event: " + message);
         if (message.contains("User created:")) {
             String userId = message.split(":")[1].trim();
             Notification notification = new Notification(
@@ -54,7 +53,6 @@ public class NotificationService {
     
     @KafkaListener(topics = "order-events", groupId = "notification-service-group")
     public void handleOrderEvents(String message) {
-        System.out.println("Processing order event: " + message);
         if (message.contains("Order created:")) {
             String orderId = message.split(":")[1].trim();
             Notification notification = new Notification(

@@ -52,6 +52,6 @@ public class OrderService {
     
     @KafkaListener(topics = "user-events", groupId = "order-service-group")
     public void handleUserEvents(String message) {
-        System.out.println("Received user event: " + message);
+        // Process user events for order service
     }
 }

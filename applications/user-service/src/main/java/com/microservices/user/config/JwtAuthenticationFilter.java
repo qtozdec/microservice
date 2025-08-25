@@ -38,15 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
         
-        System.out.println("JWT Filter - Path: " + requestPath + ", URI: " + requestURI + ", Method: " + method);
-        
         // Skip authentication only for login, register, and health endpoints
         if (requestPath.equals("/auth/login") || 
             requestPath.equals("/auth/register") || 
             requestPath.equals("/auth/refresh") ||
             requestPath.startsWith("/health") || 
             requestPath.startsWith("/actuator/")) {
-            System.out.println("JWT Filter - Skipping authentication for: " + requestPath);
             filterChain.doFilter(request, response);
             return;
         }

@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { userService, orderService, notificationService } from './api.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost';
+// Use relative paths for API calls to work with ingress (same as api.js)
+const API_BASE_URL = '';
 
 // Create axios instance for search operations
 const searchAPI = axios.create({
@@ -46,7 +48,6 @@ searchAPI.interceptors.response.use(
           return searchAPI(originalRequest);
         }
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         window.location.href = '/login';
@@ -58,35 +59,7 @@ searchAPI.interceptors.response.use(
   }
 );
 
-// Alternative API instances for direct service calls when search service isn't available
-const userAPI = axios.create({
-  baseURL: `${API_BASE_URL}/users`,
-  headers: { 'Content-Type': 'application/json' }
-});
-
-const orderAPI = axios.create({
-  baseURL: `${API_BASE_URL}/orders`,
-  headers: { 'Content-Type': 'application/json' }
-});
-
-const notificationAPI = axios.create({
-  baseURL: `${API_BASE_URL}/notifications`,
-  headers: { 'Content-Type': 'application/json' }
-});
-
-// Add auth interceptors to alternative APIs
-[userAPI, orderAPI, notificationAPI].forEach(api => {
-  api.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-});
+// Now using api.js services instead of separate axios instances
 
 export const searchService = {
   // Global search across all entities
@@ -96,9 +69,14 @@ export const searchService = {
       const response = await searchAPI.get('/global', {
         params: { q: query, limit: 50 }
       });
+      
+      // Check if response is HTML (indicates ingress fallback to frontend)
+      if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
+        throw new Error('Search service returned HTML instead of JSON');
+      }
+      
       return response.data;
     } catch (error) {
-      console.log('Dedicated search service not available, falling back to individual services');
       
       // Fallback to individual service searches
       return await searchService.fallbackSearch(query);
@@ -118,30 +96,25 @@ export const searchService = {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (user.role === 'ADMIN') {
         try {
-          const usersResponse = await userAPI.get('/', { 
-            params: { search: query, limit: 10 } 
-          });
+          const usersResponse = await userService.getUsers();
           results.users = (usersResponse.data || []).filter(u => 
             u.name?.toLowerCase().includes(query.toLowerCase()) ||
             u.email?.toLowerCase().includes(query.toLowerCase())
           ).slice(0, 10);
         } catch (err) {
-          console.log('Users search failed:', err.message);
+          // Users search failed
         }
       }
 
       // Search orders by ID or status
       try {
-        const ordersResponse = await orderAPI.get('/', {
-          params: { search: query, limit: 10 }
-        });
+        const ordersResponse = await orderService.getOrders();
         results.orders = (ordersResponse.data || []).filter(order =>
           order.id?.toString().includes(query) ||
           order.status?.toLowerCase().includes(query.toLowerCase()) ||
-          order.totalAmount?.toString().includes(query)
+          order.price?.toString().includes(query)
         ).slice(0, 10);
       } catch (err) {
-        console.log('Orders search failed:', err.message);
         
         // Mock some order data for demo purposes
         if (query.toLowerCase().includes('order') || query.match(/\d+/)) {
@@ -167,14 +140,11 @@ export const searchService = {
 
       // Search notifications by message content
       try {
-        const notificationsResponse = await notificationAPI.get(`/user/${user.userId}`, {
-          params: { search: query, limit: 10 }
-        });
+        const notificationsResponse = await notificationService.getNotificationsByUserId(user.userId);
         results.notifications = (notificationsResponse.data || []).filter(notification =>
           notification.message?.toLowerCase().includes(query.toLowerCase())
         ).slice(0, 10);
       } catch (err) {
-        console.log('Notifications search failed:', err.message);
         
         // Mock some notification data for demo purposes
         if (query.toLowerCase().includes('notification') || query.toLowerCase().includes('system')) {
@@ -199,7 +169,6 @@ export const searchService = {
 
       return results;
     } catch (error) {
-      console.error('Fallback search failed:', error);
       return results;
     }
   },
@@ -212,7 +181,6 @@ export const searchService = {
       });
       return response.data;
     } catch (error) {
-      console.error('User search failed:', error);
       return [];
     }
   },
@@ -224,7 +192,6 @@ export const searchService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Order search failed:', error);
       return [];
     }
   },
@@ -236,7 +203,6 @@ export const searchService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Notification search failed:', error);
       return [];
     }
   },
@@ -249,7 +215,6 @@ export const searchService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Suggestions failed:', error);
       return [];
     }
   }

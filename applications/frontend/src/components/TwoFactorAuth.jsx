@@ -47,7 +47,6 @@ const TwoFactorAuth = () => {
     setLoading(true);
     try {
       const setupData = await twoFactorService.setup(user.userId);
-      console.log('2FA setup response:', setupData);
       setQrCode(setupData.qrCode);
       setSecret(setupData.secret);
       setBackupCodes(setupData.backupCodes);

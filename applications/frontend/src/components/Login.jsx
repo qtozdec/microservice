@@ -19,20 +19,16 @@ const Login = ({ onToggleView }) => {
     setError('');
 
     try {
-      console.log('Login: Attempting login with:', formData.email);
       const response = await authService.login(formData);
-      console.log('Login: API response:', response.data);
 
       if (response.data && response.data.token) {
         const { token, refreshToken, ...userData } = response.data;
         
-        console.log('Login: Setting auth token and user data');
         setAuthToken(token);
         if (refreshToken) {
           localStorage.setItem('refreshToken', refreshToken);
         }
         login(userData, token);
-        console.log('Login: Login completed successfully');
       } else {
         throw new Error('Invalid response format');
       }

@@ -27,7 +27,6 @@ public class WebSocketNotificationController {
     @SendTo("/topic/notifications")
     public NotificationDTO subscribe(@Payload Map<String, String> payload, Principal principal) {
         // User subscribed to notifications
-        System.out.println("User subscribed: " + (principal != null ? principal.getName() : "anonymous"));
         
         NotificationDTO welcomeNotification = new NotificationDTO();
         welcomeNotification.setTitle("Connected");

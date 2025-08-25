@@ -22,7 +22,7 @@ auditApi.interceptors.request.use((config) => {
 export const auditService = {
   // Get paginated audit events
   getAuditEvents: async (page = 0, size = 20, sortBy = 'timestamp', sortDir = 'desc') => {
-    const response = await auditApi.get('', {
+    const response = await auditApi.get('/events', {
       params: { page, size, sortBy, sortDir }
     });
     return response.data;

@@ -118,7 +118,7 @@ kustomization.yml.bak
 certificates/
 ssl/
 tls/
-
+*.pyc
 # Monitoring Data
 prometheus-data/
 grafana-data/

@@ -46,14 +46,15 @@ const AuditLogs = () => {
           sortDirection
         );
         
-        if (data.content && data.content.length > 0) {
+        if (data && data.content && Array.isArray(data.content)) {
           setAuditEvents(data.content);
           setTotalPages(data.totalPages || 0);
           setTotalElements(data.totalElements || 0);
+          setLoading(false);
           return;
         }
       } catch (apiError) {
-        console.log('API not available, using mock data');
+        // API not available, using mock data
       }
       
       // Fallback to mock data for demonstration
@@ -205,16 +206,38 @@ const AuditLogs = () => {
   };
 
   const formatTimestamp = (timestamp) => {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) {
+      return 'N/A';
+    }
     
     try {
-      const date = new Date(timestamp);
+      // Handle timestamp format from backend: "2025-08-24T20:40:14"
+      let dateStr = timestamp;
+      
+      // If timestamp doesn't include timezone info, add Z for UTC
+      if (dateStr && !dateStr.includes('Z') && !dateStr.includes('+') && !dateStr.includes('-', 10)) {
+        dateStr = dateStr + 'Z';
+      }
+      
+      const date = new Date(dateStr);
+      
       if (isNaN(date.getTime())) {
+        console.warn('Invalid timestamp format:', timestamp);
         return 'Invalid Date';
       }
-      return date.toLocaleString();
+      
+      // Format as local time
+      const formatted = date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      return formatted;
     } catch (error) {
-      console.error('Error formatting timestamp:', timestamp, error);
       return 'Invalid Date';
     }
   };
@@ -237,7 +260,11 @@ const AuditLogs = () => {
     {
       key: 'timestamp',
       label: 'Timestamp',
-      render: (item) => formatTimestamp(item.timestamp),
+      render: (item) => {
+        // Handle case where item might be the timestamp string itself
+        const timestamp = typeof item === 'string' ? item : item.timestamp;
+        return formatTimestamp(timestamp);
+      },
       sortable: true
     },
     {

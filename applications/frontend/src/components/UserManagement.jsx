@@ -12,7 +12,13 @@ import {
   User as UserIcon,
   Mail,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Eye,
+  X,
+  Phone,
+  Calendar,
+  Clock,
+  MapPin
 } from 'lucide-react';
 
 const UserManagement = () => {
@@ -21,6 +27,7 @@ const UserManagement = () => {
   const [error, setError] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [viewingUser, setViewingUser] = useState(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -72,6 +79,10 @@ const UserManagement = () => {
     });
     setEditingUser(user);
     setShowCreateForm(true);
+  };
+
+  const handleViewProfile = (user) => {
+    setViewingUser(user);
   };
 
   const handleDelete = async (userId) => {
@@ -175,6 +186,22 @@ const UserManagement = () => {
                 <span>{new Date(value || Date.now()).toLocaleDateString()}</span>
               </div>
             )
+          },
+          {
+            key: 'actions',
+            header: 'Actions',
+            render: (value, row) => (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleViewProfile(row)}
+                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded transition-colors duration-200"
+                  title="View Profile"
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  View
+                </button>
+              </div>
+            )
           }
         ]}
         loading={loading}
@@ -271,6 +298,121 @@ const UserManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* User Profile View Modal */}
+      {viewingUser && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full animate-fadeIn">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">User Profile</h3>
+                <button
+                  onClick={() => setViewingUser(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="px-6 py-4">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                  {viewingUser.avatarUrl ? (
+                    <img
+                      src={viewingUser.avatarUrl}
+                      alt="Profile"
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    viewingUser.name
+                      ?.split(' ')
+                      .map(word => word.charAt(0))
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2) || 'U'
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-900">{viewingUser.name}</h4>
+                  <p className="text-gray-600 flex items-center">
+                    <Shield className="h-4 w-4 mr-1" />
+                    {viewingUser.role}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="space-y-3">
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">Email</span>
+                    </div>
+                    <p className="mt-1 font-medium text-gray-900">{viewingUser.email}</p>
+                  </div>
+                  
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">Phone</span>
+                    </div>
+                    <p className="mt-1 font-medium text-gray-900">{viewingUser.phone || 'Not specified'}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">Member since</span>
+                    </div>
+                    <p className="mt-1 font-medium text-gray-900">
+                      {viewingUser.createdAt ? new Date(viewingUser.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Not specified'}
+                    </p>
+                  </div>
+                  
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">Last active</span>
+                    </div>
+                    <p className="mt-1 font-medium text-gray-900">
+                      {viewingUser.lastLoginAt ? new Date(viewingUser.lastLoginAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Not specified'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Address</span>
+                </div>
+                <p className="font-medium text-gray-900">{viewingUser.address || 'Not specified'}</p>
+              </div>
+
+              {viewingUser.bio && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <UserIcon className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">Bio</span>
+                  </div>
+                  <p className="text-gray-900 whitespace-pre-wrap">{viewingUser.bio}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
