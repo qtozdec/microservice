@@ -24,46 +24,38 @@ describe('Order Service Integration Tests', () => {
   describe('Order Management', () => {
     test('should create a new order', async () => {
       const orderData = {
-        items: [
-          { productId: 'test-product-1', quantity: 2, price: 29.99 },
-          { productId: 'test-product-2', quantity: 1, price: 49.99 }
-        ],
-        totalAmount: 109.97,
-        shippingAddress: {
-          street: '123 Test St',
-          city: 'Test City',
-          state: 'TS',
-          zipCode: '12345',
-          country: 'US'
-        }
+        userId: 1,
+        product: 'test-product-1',
+        quantity: 2,
+        price: 29.99
       };
 
-      const response = await axios.post(`${config.endpoints.orderService}`, orderData, {
+      const response = await axios.post(`${config.endpoints.orderService}/orders`, orderData, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('id');
       expect(response.data).toHaveProperty('status');
       expect(response.data.status).toBe('PENDING');
-      expect(response.data.totalAmount).toBe(orderData.totalAmount);
+      expect(response.data.price).toBe(29.99);
       
       testOrderId = response.data.id;
     });
 
     test('should get order by id', async () => {
-      const response = await axios.get(`${config.endpoints.orderService}/${testOrderId}`, {
+      const response = await axios.get(`${config.endpoints.orderService}/orders/${testOrderId}`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
 
       expect(response.status).toBe(200);
       expect(response.data.id).toBe(testOrderId);
-      expect(response.data).toHaveProperty('items');
-      expect(response.data).toHaveProperty('totalAmount');
+      expect(response.data).toHaveProperty('product');
+      expect(response.data).toHaveProperty('price');
     });
 
     test('should get user orders', async () => {
-      const response = await axios.get(`${config.endpoints.orderService}/user`, {
+      const response = await axios.get(`${config.endpoints.orderService}/orders/user/1`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
 
@@ -73,7 +65,7 @@ describe('Order Service Integration Tests', () => {
     });
 
     test('should update order status', async () => {
-      const response = await axios.patch(`${config.endpoints.orderService}/${testOrderId}/status`, 
+      const response = await axios.put(`${config.endpoints.orderService}/orders/${testOrderId}/status`, 
         { status: 'CONFIRMED' },
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
@@ -85,26 +77,22 @@ describe('Order Service Integration Tests', () => {
     test('should cancel order', async () => {
       // Create a new order to cancel
       const orderData = {
-        items: [{ productId: 'test-product-3', quantity: 1, price: 19.99 }],
-        totalAmount: 19.99,
-        shippingAddress: {
-          street: '456 Cancel St',
-          city: 'Cancel City',
-          state: 'CC',
-          zipCode: '54321',
-          country: 'US'
-        }
+        userId: 1,
+        product: 'test-product-3',
+        quantity: 1,
+        price: 19.99
       };
 
-      const createResponse = await axios.post(`${config.endpoints.orderService}`, orderData, {
+      const createResponse = await axios.post(`${config.endpoints.orderService}/orders`, orderData, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
 
       const orderId = createResponse.data.id;
 
-      const cancelResponse = await axios.patch(`${config.endpoints.orderService}/${orderId}/cancel`, {}, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
+      const cancelResponse = await axios.put(`${config.endpoints.orderService}/orders/${orderId}/status`, 
+        { status: 'CANCELLED' },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
 
       expect(cancelResponse.status).toBe(200);
       expect(cancelResponse.data.status).toBe('CANCELLED');
@@ -114,32 +102,39 @@ describe('Order Service Integration Tests', () => {
   describe('Order Validation', () => {
     test('should fail to create order without authentication', async () => {
       const orderData = {
-        items: [{ productId: 'test-product-1', quantity: 1, price: 29.99 }],
-        totalAmount: 29.99
+        userId: 1,
+        product: 'test-product-1',
+        quantity: 1,
+        price: 29.99
       };
 
       try {
-        await axios.post(`${config.endpoints.orderService}`, orderData);
+        await axios.post(`${config.endpoints.orderService}/orders`, orderData);
         fail('Should have thrown an error');
       } catch (error: any) {
-        expect(error.response.status).toBe(401);
+        expect(error.response.status).toBe(403);
       }
     });
 
     test('should fail to create order with invalid data', async () => {
       const invalidOrderData = {
-        items: [],  // Empty items
-        totalAmount: -100  // Negative amount
+        userId: 1,
+        product: '',  // Empty product
+        quantity: 0,  // Zero quantity
+        price: -100  // Negative price
       };
 
+      // Now validation is implemented, so this should fail with 400
       try {
-        await axios.post(`${config.endpoints.orderService}`, invalidOrderData, {
+        await axios.post(`${config.endpoints.orderService}/orders`, invalidOrderData, {
           headers: { Authorization: `Bearer ${authToken}` }
         });
-        fail('Should have thrown an error');
+        throw new Error('Should have thrown validation error');
       } catch (error: any) {
-        // Could be 400 (bad request) or 403 (forbidden) depending on validation/auth
-        expect([400, 403]).toContain(error.response.status);
+        expect(error.response.status).toBe(400);
+        expect(error.response.data.message).toBe('Validation failed');
+        expect(error.response.data.errors).toBeDefined();
+        expect(error.response.data.errors.quantity).toContain('positive');
       }
     });
   });

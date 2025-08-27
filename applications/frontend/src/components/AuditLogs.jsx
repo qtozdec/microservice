@@ -259,53 +259,53 @@ const AuditLogs = () => {
   const columns = [
     {
       key: 'timestamp',
-      label: 'Timestamp',
-      render: (item) => {
-        // Handle case where item might be the timestamp string itself
-        const timestamp = typeof item === 'string' ? item : item.timestamp;
+      header: 'Timestamp',
+      render: (value, item) => {
+        // Handle case where value might be the timestamp string itself
+        const timestamp = typeof value === 'string' ? value : item.timestamp;
         return formatTimestamp(timestamp);
       },
       sortable: true
     },
     {
       key: 'serviceName',
-      label: 'Service',
+      header: 'Service',
       sortable: true
     },
     {
       key: 'action',
-      label: 'Action',
+      header: 'Action',
       sortable: true
     },
     {
       key: 'userId',
-      label: 'User ID',
+      header: 'User ID',
       sortable: true
     },
     {
       key: 'resourceType',
-      label: 'Resource Type',
+      header: 'Resource Type',
       sortable: true
     },
     {
       key: 'resourceId',
-      label: 'Resource ID',
+      header: 'Resource ID',
       sortable: false
     },
     {
       key: 'result',
-      label: 'Result',
-      render: (item) => getResultBadge(item.result),
+      header: 'Result',
+      render: (value, item) => getResultBadge(value),
       sortable: true
     },
     {
       key: 'ipAddress',
-      label: 'IP Address',
+      header: 'IP Address',
       sortable: false
     },
     {
       key: 'description',
-      label: 'Description',
+      header: 'Description',
       render: (value, item) => (
         <div className="max-w-xs truncate" title={value || 'N/A'}>
           {value || 'N/A'}
@@ -474,14 +474,20 @@ const AuditLogs = () => {
         <DataTable
           data={auditEvents}
           columns={columns}
-          onSort={handleSort}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
           loading={loading}
           emptyMessage="No audit events found"
+          pageSize={pageSize}
+          searchable={true}
+          filterable={false}
+          sortable={false}
+          pagination={false}
+          exportable={true}
+          exportFilename="audit-logs"
+          exportTitle="Audit Logs Export"
+          className="w-full"
         />
         
-        {/* Pagination */}
+        {/* Server-side Pagination */}
         {totalPages > 1 && (
           <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">

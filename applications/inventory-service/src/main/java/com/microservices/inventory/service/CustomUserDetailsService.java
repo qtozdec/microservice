@@ -30,10 +30,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
     
     public UserDetails createUserDetailsWithRole(String email, String role) {
+        // Handle roles that may or may not have ROLE_ prefix
+        String authority = role;
+        if (!role.startsWith("ROLE_")) {
+            authority = "ROLE_" + role;
+        }
+        
         return User.builder()
             .username(email)
             .password("") // Not used for JWT validation
-            .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role)))
+            .authorities(Collections.singletonList(new SimpleGrantedAuthority(authority)))
             .build();
     }
 }

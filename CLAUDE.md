@@ -4,20 +4,10 @@
 
 **NEVER FORGET**: If you make ANY changes to ANY service code (INCLUDING FRONTEND), you MUST:
 
-1. **Rebuild the service**
-2. **Redeploy to Kubernetes** 
-3. **Wait for rollout to complete**
+1. **Build Docker image** (e.g., `docker build -t inventory-service .`)
+2. **Restart Kubernetes deployment** (e.g., `kubectl rollout restart deployment/inventory-service -n microservices`)
+3. **Wait for rollout to complete** (`kubectl rollout status deployment/inventory-service -n microservices --timeout=60s`)
 4. **Then test**
-
-```bash
-# MANDATORY after ANY code changes to ANY services (including frontend):
-kubectl rollout restart deployment/<service-name> -n microservices
-kubectl rollout status deployment/<service-name> -n microservices --timeout=60s
-
-# For frontend specifically:
-kubectl rollout restart deployment/frontend -n microservices
-kubectl rollout status deployment/frontend -n microservices --timeout=60s
-```
 
 **FRONTEND IS ALSO A SERVICE!** Changes to React components, services, or any frontend code require rebuilding and redeploying the frontend container.
 
@@ -37,32 +27,24 @@ kubectl rollout status deployment/frontend -n microservices --timeout=60s
 5. **При компрометации** - немедленная ротация всех секретов
 6. **Документация**: `docs/SECURITY-SECRETS-MANAGEMENT.md`
 
-## Microservices Port Mapping (Kubernetes)
 
-When working with the microservices platform in Kubernetes, use these port forwards for testing:
+## ⚠️ ВАЖНО: ПОРТЫ УЖЕ ПРОБРОШЕНЫ!
 
-```bash
-# Setup port forwarding for all services
-kubectl port-forward -n microservices service/user-service 8081:8081 &
-kubectl port-forward -n microservices service/order-service 8082:8082 &  
-kubectl port-forward -n microservices service/notification-service 8083:8083 &
-kubectl port-forward -n microservices service/inventory-service 8084:8084 &
-kubectl port-forward -n microservices service/audit-service 8085:8085 &
-```
+**НЕ НУЖНО НАСТРАИВАТЬ PORT FORWARDING!** Все сервисы доступны через NodePort:
 
-### Service Endpoints:
-- **User Service**: http://localhost:8081 (Authentication, User Management)
-- **Order Service**: http://localhost:8082 (Order Management) 
-- **Notification Service**: http://localhost:8083 (Notifications)
-- **Inventory Service**: http://localhost:8084 (Product Management)
-- **Audit Service**: http://localhost:8085 (Audit Logging)
+### Service Endpoints (NodePort):
+- **User Service**: http://localhost:30081 (Authentication, User Management)
+- **Order Service**: http://localhost:30082 (Order Management) 
+- **Notification Service**: http://localhost:30083 (Notifications)
+- **Inventory Service**: http://localhost:30084 (Product Management)
+- **Audit Service**: http://localhost:30085 (Audit Logging)
 
-### Health Check URLs:
-- User Service: http://localhost:8081/health
-- Order Service: http://localhost:8082/health  
-- Notification Service: http://localhost:8083/health
-- Inventory Service: http://localhost:8084/health
-- Audit Service: http://localhost:8085/health
+### Health Check URLs (NodePort):
+- User Service: http://localhost:30081/health
+- Order Service: http://localhost:30082/health  
+- Notification Service: http://localhost:30083/health
+- Inventory Service: http://localhost:30084/health
+- Audit Service: http://localhost:30085/health
 
 ## JWT Authentication
 
@@ -73,13 +55,13 @@ All services now have unified JWT validation with these methods:
 
 ### Testing JWT:
 ```bash
-# Login to get JWT token
-curl -X POST http://localhost:8081/auth/login \
+# Login to get JWT token (NodePort)
+curl -X POST http://localhost:30081/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"user123"}'
+  -d '{"email":"test@example.com","password":"testPassword123"}'
 
-# Use token with other services  
-curl -H "Authorization: Bearer <token>" http://localhost:8082/orders
+# Use token with other services (NodePort)
+curl -H "Authorization: Bearer <token>" http://localhost:30082/orders
 ```
 
 ## Running Tests
@@ -91,8 +73,27 @@ npm test
 
 ## Deployment Commands
 
+**ОБЯЗАТЕЛЬНО: ВСЕГДА СНАЧАЛА ДЕЛАТЬ DOCKER BUILD!**
+
 ```bash
-# Restart all services after code changes
+# ПОЛНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ при изменении кода сервиса:
+
+# 1. Собрать Docker образ (из папки сервиса)
+cd applications/inventory-service
+docker build -t inventory-service .
+
+# 2. Перезапустить деплоймент
+kubectl rollout restart deployment/inventory-service -n microservices
+
+# 3. Дождаться завершения
+kubectl rollout status deployment/inventory-service -n microservices --timeout=60s
+
+# 4. Проверить
+curl http://localhost:30084/health
+```
+
+**Команды для всех сервисов:**
+```bash
 kubectl rollout restart deployment/user-service -n microservices
 kubectl rollout restart deployment/order-service -n microservices  
 kubectl rollout restart deployment/notification-service -n microservices

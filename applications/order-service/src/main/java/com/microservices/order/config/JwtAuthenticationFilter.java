@@ -5,6 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +21,8 @@ import java.util.Collections;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     
     @Autowired
     private JwtService jwtService;
@@ -49,21 +53,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         jwt = authHeader.substring(7);
         
-        if (jwtService.isTokenValid(jwt)) {
+        try {
             userEmail = jwtService.extractEmail(jwt);
-            role = jwtService.extractRole(jwt);
             
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userEmail,
-                    null,
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
-                );
-                authToken.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                role = jwtService.extractRole(jwt);
+                
+                if (jwtService.isTokenValid(jwt, userEmail)) {
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userEmail,
+                        null,
+                        Collections.singletonList(authority)
+                    );
+                    authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    logger.info("JWT authentication successful for user: {} with role: {} (authority: {})", userEmail, role, authority.getAuthority());
+                    logger.info("SecurityContext authentication set: {}, authorities: {}", 
+                        SecurityContextHolder.getContext().getAuthentication().getName(),
+                        SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+                } else {
+                    logger.info("JWT token validation failed for user: {}", userEmail);
+                }
             }
+        } catch (Exception e) {
+            logger.info("JWT processing failed for token: {} - Error: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 50)) + "..." : "null", e.getMessage());
         }
         
         filterChain.doFilter(request, response);

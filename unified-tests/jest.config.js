@@ -8,10 +8,20 @@ module.exports = {
     '!**/node_modules/**',
     '!**/dist/**',
     '!**/*.config.js',
-    '!**/coverage/**'
+    '!**/coverage/**',
+    '!**/scripts/**'
   ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70
+    }
+  },
   testTimeout: 30000,
-  maxWorkers: 4,
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   transform: {
     '^.+\\.(ts|tsx)$': 'ts-jest',
@@ -21,7 +31,7 @@ module.exports = {
     '**/__tests__/**/*.(ts|js)',
     '**/*.(test|spec).(ts|js)'
   ],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '^@helpers/(.*)$': '<rootDir>/helpers/$1',
     '^@utils/(.*)$': '<rootDir>/utils/$1',

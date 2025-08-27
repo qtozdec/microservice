@@ -1,6 +1,7 @@
 package com.microservices.order.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -11,15 +12,24 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @NotNull(message = "User ID cannot be null")
+    @Positive(message = "User ID must be positive")
     @Column(name = "user_id", nullable = false)
     private Long userId;
     
+    @NotBlank(message = "Product name cannot be blank")
+    @Size(min = 1, max = 255, message = "Product name must be between 1 and 255 characters")
     @Column(nullable = false)
     private String product;
     
+    @NotNull(message = "Quantity cannot be null")
+    @Positive(message = "Quantity must be positive")
     @Column(nullable = false)
     private Integer quantity;
     
+    @NotNull(message = "Price cannot be null")
+    @DecimalMin(value = "0.01", message = "Price must be greater than 0")
+    @Digits(integer = 8, fraction = 2, message = "Price must have at most 8 integer digits and 2 fraction digits")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
     
