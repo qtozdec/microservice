@@ -21,6 +21,16 @@ public class AuthResponse {
         this.userId = userId;
     }
     
+    // Constructor for error responses
+    public AuthResponse(String message) {
+        this.token = null;
+        this.refreshToken = null;
+        this.email = message;
+        this.name = null;
+        this.role = null;
+        this.userId = null;
+    }
+    
     public String getToken() {
         return token;
     }

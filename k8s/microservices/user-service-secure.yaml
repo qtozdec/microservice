@@ -1,0 +1,292 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: microservices
+  labels:
+    app: user-service
+    component: backend
+    security.policy: strict
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+        component: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/actuator/prometheus"
+        security.policy/secrets: "strict"
+    spec:
+      serviceAccountName: user-service  # Required for RBAC
+      containers:
+      - name: user-service
+        image: user-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+          name: http
+        env:
+        # Server Configuration (from ConfigMap)
+        - name: SERVER_PORT
+          value: "8081"
+        - name: SPRING_APPLICATION_NAME
+          value: "user-service"
+        
+        # Non-sensitive configuration from secure ConfigMap
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SPRING_PROFILES_ACTIVE
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: LOG_LEVEL
+        
+        # Database Configuration (SECRETS - sensitive data)
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            secretKeyRef:
+              name: microservices-secrets-secure
+              key: USER_SERVICE_DB_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: microservices-secrets-secure
+              key: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: microservices-secrets-secure
+              key: SPRING_DATASOURCE_PASSWORD
+        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: DB_DRIVER
+        
+        # Database Connection Pool (from ConfigMap)
+        - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+        - name: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
+        - name: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+        
+        # JPA/Hibernate Configuration (from ConfigMap)
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        - name: SPRING_JPA_SHOW_SQL
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SPRING_JPA_SHOW_SQL
+        - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+        
+        # Liquibase
+        - name: SPRING_LIQUIBASE_ENABLED
+          value: "true"
+        
+        # Redis Configuration (mixed - host from ConfigMap, password from Secret)
+        - name: SPRING_DATA_REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: REDIS_HOST
+        - name: SPRING_DATA_REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: REDIS_PORT
+        - name: SPRING_DATA_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: microservices-secrets-secure
+              key: SPRING_DATA_REDIS_PASSWORD
+        - name: SPRING_DATA_REDIS_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: REDIS_TIMEOUT
+        
+        # JWT Configuration (SECRET - sensitive data)
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: microservices-secrets-secure
+              key: JWT_SECRET
+        - name: JWT_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: JWT_EXPIRATION
+        - name: JWT_REFRESH_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: JWT_REFRESH_EXPIRATION
+        - name: JWT_ALGORITHM
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: JWT_ALGORITHM
+        
+        # Security Configuration (from ConfigMap)
+        - name: SECURITY_REQUIRE_SSL
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SECURITY_REQUIRE_SSL
+        - name: SECURITY_MAX_LOGIN_ATTEMPTS
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SECURITY_MAX_LOGIN_ATTEMPTS
+        - name: SECURITY_LOCKOUT_DURATION
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: SECURITY_LOCKOUT_DURATION
+        
+        # Rate Limiting Configuration (from ConfigMap)
+        - name: RATE_LIMIT_REQUESTS_PER_MINUTE
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: RATE_LIMIT_REQUESTS_PER_MINUTE
+        
+        # Inter-service API Key (SECRET)
+        - name: INTER_SERVICE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: microservices-secrets-secure
+              key: INTER_SERVICE_API_KEY
+        
+        # Actuator/Management Configuration (from ConfigMap)
+        - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+        - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+        - name: MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config-secure
+              key: MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED
+        
+        # Health and readiness probes
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Resource limits and requests
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        
+        # Enhanced Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+        
+        # Security: Mount secrets as read-only volumes (additional protection)
+        volumeMounts:
+        - name: secret-volume
+          mountPath: "/etc/secrets"
+          readOnly: true
+      
+      # Pod-level security settings
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Mount secrets as volumes (best practice)
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: microservices-secrets-secure
+          defaultMode: 0400  # Read-only for owner only
+---
+# Service Account for RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: user-service
+  namespace: microservices
+  labels:
+    app: user-service
+    component: backend
+automountServiceAccountToken: false  # Security: disable if not needed
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: microservices
+  labels:
+    app: user-service
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8081
+    targetPort: 8081
+    protocol: TCP
+    name: http
+  selector:
+    app: user-service

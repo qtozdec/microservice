@@ -27,7 +27,7 @@ application-secrets.yml
 application-*.yml
 !application.yml.example
 
-# Kubernetes Secrets (actual secret files)
+# Kubernetes Secrets (actual secret files) - CRITICAL: NEVER COMMIT!
 k8s/secrets/development/
 k8s/secrets/staging/
 k8s/secrets/production/
@@ -35,6 +35,21 @@ k8s/secrets/local/
 k8s/secrets/*.yaml
 !k8s/secrets/*.template
 !k8s/secrets/*.example
+
+# Application Secrets - CRITICAL: NEVER COMMIT!
+applications/k8s/microservices/secrets.yaml
+k8s/microservices/microservices-secrets-secure.yaml
+**/secrets.yaml
+!**/secrets.yaml.template
+
+# Additional Secret Patterns - CRITICAL: NEVER COMMIT!
+**/*-secret.yaml
+**/*-secrets.yaml
+**/microservices-secret*.yaml
+**/postgres-secret*.yaml
+**/redis-secret*.yaml
+!**/*.template
+!**/*.example
 
 # Environment-specific secrets
 .env.local

@@ -38,14 +38,20 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(req -> req
-                .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/health", "/actuator/**").permitAll()
+                .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/health", "/actuator/**", "/test-rate-limit").permitAll()
                 .requestMatchers("/auth/2fa/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .headers(headers -> headers
+                .frameOptions().deny()
+                .contentTypeOptions().and()
+                .httpStrictTransportSecurity(hstsConfig -> hstsConfig
+                    .maxAgeInSeconds(31536000))
+            );
         
         return http.build();
     }

@@ -79,7 +79,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,metrics,prometheus}
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,metrics,prometheus,ratelimiters}
   endpoint:
     health:
       show-details: ${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:when-authorized}
@@ -87,3 +87,23 @@ management:
     export:
       prometheus:
         enabled: ${MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED:true}
+
+# Resilience4j Rate Limiting Configuration
+resilience4j:
+  ratelimiter:
+    instances:
+      authRateLimiter:
+        limit-for-period: 10
+        limit-refresh-period: 60s
+        timeout-duration: 1s
+        register-health-indicator: true
+      userApiRateLimiter:
+        limit-for-period: 100
+        limit-refresh-period: 60s
+        timeout-duration: 1s
+        register-health-indicator: true
+      adminApiRateLimiter:
+        limit-for-period: 200
+        limit-refresh-period: 60s
+        timeout-duration: 1s
+        register-health-indicator: true
